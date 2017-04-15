@@ -46,4 +46,4 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.div [] [ Html.text <| toString model ]
+    Html.text <| toString model

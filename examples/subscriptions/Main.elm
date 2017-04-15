@@ -91,6 +91,9 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Clicked: " ++ (toString model.clicks)
-        , Component.view moves model
+        [ Html.text <| "Clicks: " ++ (toString model.clicks)
+        , Html.div []
+            [ Html.text "Position: "
+            , Component.view moves model
+            ]
         ]
