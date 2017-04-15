@@ -1,4 +1,4 @@
-module Component exposing (Component, component, init, update, view, subscriptions, lift)
+module Component exposing (Component, component, init, update, view, subscriptions, map)
 
 {-| Composing Elm applications from smaller parts (Components) with respect to TEA.
 You can think about this as about lightweight abstraction built around [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map)
@@ -16,7 +16,7 @@ Interface with TEA parts.
 # Helpers
 Helpers for transfering generic TEA application to [`Component`](#Component)
 
-@docs lift
+@docs map
 
 -}
 
@@ -203,16 +203,16 @@ counter : Component Model Counter.Model Msg Counter.Msg
 counter =
     Component.component
         { model = \subModel model -> { model | counter = subModel }
-        , init = Counter.init |> Component.lift CounterMsg
+        , init = Counter.init |> Component.map CounterMsg
         , update =
             \subMsg model ->
                 Counter.update subMsg model.counter
-                    |> Component.lift CounterMsg
+                    |> Component.map CounterMsg
         , view = \model -> Html.map CounterMsg <| Counter.view model.counter
         , subscriptions = \_ -> Sub.none
         }
 ```
 -}
-lift : (subMsg -> msg) -> ( subModel, Cmd subMsg ) -> ( subModel, Cmd msg )
-lift constructor ( subModel, subCmd ) =
+map : (subMsg -> msg) -> ( subModel, Cmd subMsg ) -> ( subModel, Cmd msg )
+map constructor ( subModel, subCmd ) =
     ( subModel, Cmd.map constructor subCmd )

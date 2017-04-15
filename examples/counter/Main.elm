@@ -17,11 +17,11 @@ counter : Component Model Counter.Model Msg Counter.Msg
 counter =
     Component.component
         { model = \subModel model -> { model | counter = subModel }
-        , init = Counter.init |> Component.lift CounterMsg
+        , init = Counter.init |> Component.map CounterMsg
         , update =
             \subMsg model ->
                 Counter.update subMsg model.counter
-                    |> Component.lift CounterMsg
+                    |> Component.map CounterMsg
         , view = \model -> Html.map CounterMsg <| Counter.view model.counter
         , subscriptions = \_ -> Sub.none
         }

@@ -18,11 +18,11 @@ moves : Component Model Moves.Model Msg Moves.Msg
 moves =
     Component.component
         { model = \subModel model -> { model | moves = subModel }
-        , init = Moves.init |> Component.lift MovesMsg
+        , init = Moves.init |> Component.map MovesMsg
         , update =
             \subMsg model ->
                 Moves.update subMsg model.moves
-                    |> Component.lift MovesMsg
+                    |> Component.map MovesMsg
         , view = \model -> Html.map MovesMsg <| Moves.view model.moves
         , subscriptions = \model -> Sub.map MovesMsg <| Moves.subscriptions model.moves
         }
