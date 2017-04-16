@@ -52,7 +52,7 @@ TEA is awesome way to write Html based apps in Elm. However not every applicatio
 Basics separation of [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program) is really nice for small apps
 but tends to grow pretty quickly in unmanageable way. Also not everyone believes that keeping so much stuff in few giant blobs is good way
 to organize every application. [Official website](http://elm-lang.org/) claims "No full rewrites, no huge time investment." yet it only offers
-only [`interop`](https://guide.elm-lang.org/interop/) as answer which is no near to be full solution for moving from embedded elm components
+[`interop`](https://guide.elm-lang.org/interop/) as answer which is no near to be full solution for moving from embedded elm components
 to elm only SPA.
 
 It's clear that there real need to make TEA apps composable.
