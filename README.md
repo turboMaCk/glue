@@ -52,8 +52,8 @@ TEA is awesome way to write Html based apps in Elm. However not every applicatio
 Basics separation of [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program) is really nice for small apps
 but tends to grow pretty quickly in unmanageable way. Also not everyone believes that keeping so much stuff in few giant blobs is good way
 to organize every application. [Official website](http://elm-lang.org/) claims "No full rewrites, no huge time investment." yet it only offers
-only [`interop`](https://guide.elm-lang.org/interop/) as solution which is no near to be full solution for moving from embedded elm components
-to elm monolith.
+only [`interop`](https://guide.elm-lang.org/interop/) as answer which is no near to be full solution for moving from embedded elm components
+to elm only SPA.
 
 It's clear that there real need to make TEA apps composable.
 This is when [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
@@ -124,13 +124,13 @@ You can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0
 
 ## How?
 
-The most important type TEA is build around is `( Model, Cmd Msg )`. All we miss is just tiny abstraction that might
+The most important type TEA is build around is `( Model, Cmd Msg )`. All we miss is just tiny abstraction that will
 make working with this pair easier. This is really the core idea of whole `Component` package.
 
-To simplify this gluing as well as making components definition simpler and obvious `Component` type is introduced.
-Same way `Html.Program` glues TEA together `Component.Component` glues component functions.
-Unlike `Program` `Component` is in fact just bunch of functions describing glue between parent and children.
-Other functions within `Component` package then using functions this type holds. Thanks to this all gluing is kept on one place.
+To simplify gluing as well `Component` type is introduced by this package.
+Same way `Html.Program` glues TEA together `init`, `update`, `view` and `subscriptions` `Component.Component` glues parent and child APIs.
+Unlike `Program` `Component` is in fact just bunch of functions which doesn't do anything by itself.
+Other functions within `Component` package then using `Component.Component` type as proxy to its glue logic.
 
 ### Using TEA App as Component
 
@@ -152,28 +152,27 @@ counter =
         , subscriptions = \_ -> Sub.none
         }
 ```
-All mapping from one type to another happens in here. This is different in case of [polymorfic components](#wrap-polymorfic-component).
+All mapping from one type to another happens in here. This is different in case of [polymorfic components](#wrap-polymorfic-component)
+but more about this later. With `Component` define we can go and integrate it to parent.
 
-With `Component` define we can go and integrate it to parent.
-
-Before we do so this is how parent's `Model` and `Msg` looks like:
+Before we do so this is how parent's `Model` and `Msg` looks like.
+Based on `Component` type definition we know we're expecting `Model` and `Msg` to be like:
 
 ```elm
 type alias Model =
-    { message : String
-    , counterModel : Counter.Model }
+    { counterModel : Counter.Model }
 
 type Msg
     = CounterMsg Counter.Msg
 ```
 
-and this is our `init`, `update` and `view`:
+And this is our `init`, `update` and `view`:
 
 ```elm
 
 init : ( Model, Cmd msg )
 init =
-    ( Model "Hello word", Cmd.none )
+    ( Model, Cmd.none )
         |> Component.init counter
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -190,9 +189,9 @@ view =
 
 ### Wrap Polymorfic Component
 
-Polymorphic component is what I call TEA components that are already designed to be integrated to some other app.
-This basically means they are using `Cmd.map`, `Html.map` and `Sub.map` internally. Let's make `Counter.elm` from examples polymorphic.
-This will require us to add one extra argument to its `view` function and change in type annotations like:
+Polymorphic component is what I call TEA components that has to be integrated to some other app.
+This basically means they are using `Cmd.map`, `Html.map` and `Sub.map` internally. Let's make `Counter.elm` polymorphic.
+This will require us to add one extra argument to its `view` function and small change in type annotations for `init` and `update`:
 
 ```elm
 init : ( Model, Cmd msg )
@@ -210,7 +209,7 @@ view msg model =
             ]
 ```
 
-then we need to change our `Component` definition in upper component to reflect new API of children:
+Then we need to change our `Component` definition in upper component to reflect new API of children:
 
 ```elm
 counter : Component Model Counter.Model Msg Counter.Msg
@@ -224,7 +223,8 @@ counter =
         }
 ```
 
-This is all what is required when child component API changes. Now we can make it talk to parent.
+This is all what is required when child component API changes.
+Since `Component` type holds all gluing there is no need for changes in parent's `init`, `update` and `view`.
 
 ### Action Bubbling
 
@@ -257,7 +257,7 @@ Using `Cmd` for communication with upper component works like this:
 
 ```
 
-As an example we can use our previous example. Let's say we want to send some action to parent when counter's model is even.
+As an example we can use (polymorphic) `Counter.elm` again. Let's say we want to send some action to parent when counter's model is even.
 For this we need to define helper function in `Counter.elm`.
 
 ```elm
@@ -276,10 +276,10 @@ notifyEven msg model =
 
 `isEven` is pretty strait forward. It's just returns `True/False` for given `Int`.
 `notifyEven` takes parent's `Msg` constructor and either [`perform`](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/1.0.0/Cmd-Extra#perform)
-it as `Cmd` or return `Cmd.none`.
+it as `Cmd` or return `Cmd.none` in case of odd number.
 
-Now we need to change `init` and `update` so it's emitting this `Cmd`.
-Simplest way is just to make them accept `msg` constructor as following:
+Now we need to change `init` and `update` so it's emitting this new `Cmd`.
+The simplest way is just to make them both accept `msg` constructor as following:
 
 ```elm
 init : msg -> ( Model, Cmd msg )
@@ -305,7 +305,7 @@ update notify msg model =
 ```
 
 Now both `init` and `update` should send `Cmd` when `Model` is even number.
-This is breaking change in `Counter`'s API so we will need to change it parent as well.
+This is breaking change in `Counter`'s API so we will need to change its parent integration as well.
 Anyway since we want to actually use this message and do something with it let me first update parent's `Msg` and `Model`:
 
 ```elm
@@ -319,7 +319,7 @@ type Msg
     | Even
 ```
 
-because we've changed `Model` (removed `message : String` and added `even : Bool`) we should change `init` and `view` as well:
+Because we've changed `Model` (added `even : Bool`) we should change `init` and `view` as well:
 
 ```elm
 init : ( Model, Cmd Msg )
@@ -338,7 +338,7 @@ view model =
         ]
 ```
 
-This should solve changes in model. Now we need to update our `update` so it can handle `Even` `Msg`.
+This solves changes in model. Now we need to update our `update` so it can handle `Even` `Msg`.
 
 ```elm
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -354,11 +354,11 @@ update msg model =
 
 As you can see we're setting `even` to `False` on every `CounterMsg`.
 This is because `Counter` is just emitting `Cmd` when its `Model` is Even.
-This is to show you why you might need to update both parent's and child's `Model` on single `Msg` and how to do it.
+This is to show you why you might need to update both parent's and child's `Model` on single `Msg` (`CounterMsg` in this case) and how to do it.
 
-Then we need to handle `Even` action itself. This simply sets `even = True`.
+Now we need to handle `Even` action itself. This simply sets `even = True` in model.
 
-Now parent is ready to handle actions from `Counter`. Last step is simply to update `Component` definition and glue new APIs together:
+Since parent is ready to handle actions from `Counter` our last step is simply to update `Component` type definition and glue new APIs together:
 
 ```elm
 counter : Component Model Counter.Model Msg Counter.Msg
@@ -372,8 +372,8 @@ counter =
         }
 ```
 
-We simply pass parent's `Even` constructor to `update` and `init` of parent.
-This is all you need to do to wire `Cmd` from child to parent.
+There we simply pass parent's `Even` `Msg` constructor to `update` and `init` of child.
+This is all we need to do to wire `Cmd` from child to parent.
 
 See [complete example](https://github.com/turboMaCk/component/tree/master/examples/bubbling) to learn more.
 
