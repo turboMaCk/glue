@@ -6,7 +6,7 @@ This package helps you to reduce boilerplate while composing TEA (The Elm Archit
 and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
 `Component` also respect TEA's design decisions and philosophy and introduces as little abstraction over basic TEA constructs as possible.
 It's fair to say that `Component` is alternative to [elm-parts](http://package.elm-lang.org/packages/debois/elm-parts/latest)
-but uses different (no better or worst!) approach to make composition of smaller pieces to larger ones easier.
+but uses different (no better or worst) approach for composing smaller pieces to larger ones.
 
 **This package is highly experimental and might change a lot over time.**
 
@@ -14,15 +14,16 @@ Feedback and contributions to both code and documentation are very welcome.
 
 ## tl;dr
 
-This package is result of my longer time experience with building large application in elm by composing
-smaller pieces together. This was my main goal and concerns while designing this:
+This package is result of my experience with building larger application in elm by composing
+smaller pieces together. Goals and features of this package are:
 
 - Reduce boilerplate in `update` and `init` functions.
-- Make it simple to use and manage (Something like what `Html.program` or legacy `start-app` did).
-- Don't enforce changes in lower component (since they're more likely to be isolated from rest of app).
-- Keep all gluing logic in one tiny layer.
+- Simple and easy to use management of components (Something like what [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program)
+or legacy [`start-app`](http://package.elm-lang.org/packages/evancz/start-app/latest) did to TEA).
+- Don't enforce changes in lower component to make them compatible (since they're more likely to be isolated from rest of app).
+- Keep all gluing logic in one tiny layer (`Component` type in this case).
 - Make it possible to turn standalone Elm app to component.
-- Make it possible to use with [`Polymorphic Components`](#wrap-polymorphic-component).
+- Make it possible to use with [`Polymorphic Components`](#wrap-polymorfic-component).
 - Support [`Action Bubbling`](#action-bubbling) from child component to parent one.
 
 ## Install
@@ -50,12 +51,15 @@ Namely you can find:
 TEA is awesome way to write Html based apps in Elm. However not every application can be defined just in terms of `Model` `update` and `view`.
 Basics separation of [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program) is really nice for small apps
 but tends to grow pretty quickly in unmanageable way. Also not everyone believes that keeping so much stuff in few giant blobs is good way
-to organize every application. One other example might be incremental rewrite of application to elm where you need to build new application
-from small parts that can be independently integrated to legacy code-base.
-This is when [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map)
+to organize every application. [Official website](http://elm-lang.org/) claims "No full rewrites, no huge time investment." yet it only offers
+only [`interop`](https://guide.elm-lang.org/interop/) as solution which is no near to be full solution for moving from embedded elm components
+to elm monolith.
+
+It's clear that there real need to make TEA apps composable.
+This is when [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
+[`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
 and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) can become handy.
-You can then start nesting TEA components in TEA components.
-Your app is one big component composed by smaller ones which can also be composed by more components as well.
+They allows you to start nesting `init`, `update`, `subscribtions` and `view` to larger pieces.
 This is how `Model` and `Msg` of parent application might looks like:
 
 ```elm
@@ -74,8 +78,11 @@ type Msg
 ```
 
 Basically top components only holds `Model` of sub-component as single value and wraps it's `Msg` inside one of its `Msg` constructors.
-Of course also `init` `update` and `subscribes` has to know how to works with sub-components and this is where `Cmd.map`, `Html.map` and `Sub.map`
-becomes handy. For instance this is how delegation of `Msg` and `update` might look like:
+Of course also `init` `update` and `subscribes` has to know how to works with sub-components and there you need
+[`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
+[`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) and
+[`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map).
+For instance this is how delegation of `Msg` in `update` might look like:
 
 ```elm
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -91,8 +98,8 @@ update msg model =
         ...
 ```
 
-As you can see this is quite handy even though it requires some boiler-plate code.
-Let's have a look how view and `Html.map` can be used together:
+As you can see this is quite neat even though it requires some boiler-plate code.
+Let's have a look how view and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) in action:
 
 ```elm
 view : Model -> Html Msg
@@ -104,14 +111,16 @@ view model =
        , ... ]
 ```
 
-Then you can use `Cmd.map` inside `init` and `Sub.map` in `subscriptions` to finish integration of sub-component to upper one.
+You can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map) inside `init` as well and
+[`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map) which is fairly similar to
+[`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) in `subscriptions` to finish integration of sub-component to upper one.
 
-**And this is as far as pure TEA can goes. This can be possibly enough for you and that's OK. Why you might need `Component`?**
+**And this is as far as pure TEA can goes. This can be possibly enough for you and that's OK. Why you might still want to use `Component` package?**
 
 - This approach requires a lot of boilerplate code inside `update` `init` and `subscriptions`.
-- On all places you're handling both parent and child component.
-- Many changes in SubComponents requires changes in its parent as well.
-- You have to be really careful to work with subComponent from its parent (issues with missed subscriptions etc.)
+- On all places you're handling both parent and child component at the same time.
+- Often changes in sub-component requires changes in its parent as well.
+- Gluing lacks any common interface and tends to change a lot over time.
 
 ## How?
 
