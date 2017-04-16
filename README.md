@@ -118,9 +118,9 @@ You can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0
 **And this is as far as pure TEA goes. This may possibly be enough for you, and that's OK. Why might you still want to use this `Component` package?**
 
 - Without `Component`, the approach requires a lot of boilerplate code inside `update`, `init`, and `subscriptions`.
-- On each place, you're handling both the parent and the child component at the same time.
+- In each place, you're handling both the parent and the child component at the same time.
 - Often, changes in a sub-component require changes in its parent as well.
-- Glueing lacks any common interface and tends to change a lot over time.
+- Glueing lacks a common interface and tends to change a lot over time.
 
 ## How?
 
