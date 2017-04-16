@@ -14,7 +14,10 @@ type alias Model =
 
 init : msg -> ( Model, Cmd msg )
 init msg =
-    ( 0, Cmd.Extra.perform msg )
+    let
+        model = 0
+    in
+        ( model, notifyEven msg model )
 
 
 

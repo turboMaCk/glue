@@ -10,7 +10,7 @@ but uses different (no better or worst!) approach to make composition of smaller
 
 **This package is highly experimental and might change a lot over time.**
 
-Feedback and contributions are very welcome.
+Feedback and contributions to both code and documentation are very welcome.
 
 ## tl;dr
 
@@ -122,6 +122,9 @@ To simplify this gluing as well as making components definition simpler and obvi
 Same way `Html.Program` glues TEA together `Component.Component` glues component functions.
 Unlike `Program` `Component` is in fact just bunch of functions describing glue between parent and children.
 Other functions within `Component` package then using functions this type holds. Thanks to this all gluing is kept on one place.
+
+### Using TEA App as Component
+
 This is how we can construct `Component` type for [counter example](https://guide.elm-lang.org/architecture/user_input/buttons.html):
 
 ```elm
@@ -130,13 +133,13 @@ import Counter
 counter : Component Model Counter.Model Msg Counter.Msg
 counter =
     Component.component
-        { model = \subModel model -> { model | counter = subModel }
+        { model = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init |> Component.map CounterMsg
         , update =
             \subMsg model ->
-                Counter.update subMsg model.counter
+                Counter.update subMsg model.counterModel
                     |> Component.map CounterMsg
-        , view = \model -> Html.map CounterMsg <| Counter.view model.counter
+        , view = \model -> Html.map CounterMsg <| Counter.view model.counterModel
         , subscriptions = \_ -> Sub.none
         }
 ```
@@ -175,8 +178,6 @@ view : Model -> Html Msg
 view =
     Component.view counter
 ```
-
-*It's recommended to always integrate `subscriptions` as well!*
 
 ### Wrap Polymorfic Component
 
@@ -247,9 +248,132 @@ Using `Cmd` for communication with upper component works like this:
 
 ```
 
+As an example we can use our previous example. Let's say we want to send some action to parent when counter's model is even.
+For this we need to define helper function in `Counter.elm`.
+
+```elm
+isEven : Int -> Bool
+isEven =
+    (==) 0 << (Basics.flip (%)) 2
+
+
+notifyEven : msg -> Model -> Cmd msg
+notifyEven msg model =
+    if isEven model then
+        Cmd.Extra.perform msg
+    else
+        Cmd.none
+```
+
+`isEven` is pretty strait forward. It's just returns `True/False` for given `Int`.
+`notifyEven` takes parent's `Msg` constructor and either [`perform`](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/1.0.0/Cmd-Extra#perform)
+it as `Cmd` or return `Cmd.none`.
+
+Now we need to change `init` and `update` so it's emitting this `Cmd`.
+Simplest way is just to make them accept `msg` constructor as following:
+
+```elm
+init : msg -> ( Model, Cmd msg )
+init msg =
+    let
+        model = 0
+    in
+        ( model, notifyEven msg model )
+
+
+update : msg -> Msg -> Model -> ( Model, Cmd msg )
+update notify msg model =
+    let
+        newModel =
+            case msg of
+                Increment ->
+                    model + 1
+
+                Decrement ->
+                    model - 1
+    in
+        ( newModel, notifyEven notify newModel )
+```
+
+Now both `init` and `update` should send `Cmd` when `Model` is even number.
+This is breaking change in `Counter`'s API so we will need to change it parent as well.
+Anyway since we want to actually use this message and do something with it let me first update parent's `Msg` and `Model`:
+
+```elm
+type alias Model =
+    { even : Bool
+    , counter : Counter.Model
+    }
+
+type Msg
+    = CounterMsg Counter.Msg
+    | Even
+```
+
+because we've changed `Model` (removed `message : String` and added `even : Bool`) we should change `init` and `view` as well:
+
+```elm
+init : ( Model, Cmd Msg )
+init =
+    ( Model False, Cmd.none )
+        |> Component.init counter
+
+view : Model -> Html Msg
+view model =
+    Html.div []
+        [ Component.view counter model
+        , if model.even then
+            Html.text "is even"
+          else
+            Html.text "is odd"
+        ]
+```
+
+This should solve changes in model. Now we need to update our `update` so it can handle `Even` `Msg`.
+
+```elm
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        CounterMsg counterMsg ->
+            ( { model | even = False }, Cmd.none )
+                |> Component.update counter counterMsg
+
+        Even ->
+            ( { model | even = True }, Cmd.none )
+```
+
+As you can see we're setting `even` to `False` on every `CounterMsg`.
+This is because `Counter` is just emitting `Cmd` when its `Model` is Even.
+This is to show you why you might need to update both parent's and child's `Model` on single `Msg` and how to do it.
+
+Then we need to handle `Even` action itself. This simply sets `even = True`.
+
+Now parent is ready to handle actions from `Counter`. Last step is simply to update `Component` definition and glue new APIs together:
+
+```elm
+counter : Component Model Counter.Model Msg Counter.Msg
+counter =
+    Component.component
+        { model = \subModel model -> { model | counter = subModel }
+        , init = Counter.init Even
+        , update = \subMsg model -> Counter.update Even subMsg model.counter
+        , view = \model -> Counter.view CounterMsg model.counter
+        , subscriptions = \_ -> Sub.none
+        }
+```
+
+We simply pass parent's `Even` constructor to `update` and `init` of parent.
+This is all you need to do to wire `Cmd` from child to parent.
+
 See [complete example](https://github.com/turboMaCk/component/tree/master/examples/bubbling) to learn more.
 
 ## Reevaluating and Future
+
+This package is still in really early stage and needs to be tested in field.
+Personally I still need to sort out few things.
+For instance is it really good idea to include `view` handling since not every `Component` (or maybe rather `Service` in that case) actually has to have view?
+Anyway I hope this provides good base for further improvements and discussion of how to compose larger apps with TEA.
 
 ## License
 
