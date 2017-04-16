@@ -21,7 +21,7 @@ smaller pieces together. The goals and features of this package are:
 - Simple and easy to use management of components (Something like what [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program)
 or legacy [`start-app`](http://package.elm-lang.org/packages/evancz/start-app/latest) did to TEA).
 - Don't enforce changes in sub-components to make them compatible (since they're more likely to be isolated from the rest of the app).
-- Keep all gluing logic in one tiny layer (the `Component` type in this case).
+- Keep all glueing logic in one tiny layer (the `Component` type in this case).
 - Make it possible to turn a standalone Elm app into a component.
 - Make it possible to use with [`Polymorphic Components`](#wrap-polymorphic-component).
 - Support [`Action Bubbling`](#action-bubbling) from child components to the parent component.
@@ -115,7 +115,7 @@ You can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map) which is fairly similar to
 [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) in `subscriptions` to finish integrating a sub-component into a higher-level one.
 
-**And this is as far as pure TEA can goes. This may possibly be enough for you, and that's OK. Why might you still want to use this `Component` package?**
+**And this is as far as pure TEA goes. This may possibly be enough for you, and that's OK. Why might you still want to use this `Component` package?**
 
 - Without `Component`, the approach requires a lot of boilerplate code inside `update`, `init`, and `subscriptions`.
 - On each place, you're handling both the parent and the child component at the same time.
