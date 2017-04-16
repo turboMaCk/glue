@@ -31,7 +31,7 @@ or legacy [`start-app`](http://package.elm-lang.org/packages/evancz/start-app/la
 As you expected...
 
 ```
-$ elm-package install turboMaCk/component
+$ elm-package install turboMaCk/tea-component
 ```
 
 ## Examples
