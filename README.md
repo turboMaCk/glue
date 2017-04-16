@@ -1,5 +1,17 @@
 # TEA Component
 
+## WARNING!
+
+**This package is meant either for really large SPA apps written in Elm
+or for incremental transitioning from a JavaScript to an Elm app,
+which you'll want to organize differently once you get things predominantly in Elm.
+IF YOU ARE NOT EXPERIENCED ELM PROGRAMMER OR YOUR PROJECT DOESN'T REQUIRE HIGHER LEVEL
+OF MODULARITY STICK TO PLAIN TEA INSTEAD. You can always come back and add this extra level
+of complexity once you're completely sure you can benefit from it. Always grow your architecture
+as a problem you're trying to solve grows, no other way around!**
+
+**[More informations](https://www.reddit.com/r/elm/comments/5jd2xn/how_to_structure_elm_with_multiple_models/dbkpgbd/)**
+
 This package helps you to reduce boilerplate while composing TEA (The Elm Architecture) based application using
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
