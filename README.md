@@ -1,4 +1,4 @@
-# (TEA) Component
+# TEA Component
 
 This package helps you to reduce boilerplate while composing TEA (The Elm Architecture) based application using
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),

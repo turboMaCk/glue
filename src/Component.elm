@@ -1,9 +1,11 @@
 module Component exposing (Component, component, init, update, view, subscriptions, map)
 
 {-| Composing Elm applications from smaller parts (Components) with respect to TEA.
-You can think about this as about lightweight abstraction built around [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map)
-and [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map)
-that reduces boilerplate while composing TEA based components in larger applications.
+You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
+that reduces boilerplate needed for compostion of TEA based components using
+[`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
+[`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
+and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
 
 # Types
 @docs Component, component
@@ -27,7 +29,7 @@ import Html exposing (Html)
 
 You can create `Component` with the [`component`](#component) constructor.
 Every component is defined in terms of `Model`, `[SubComponent].Model` `Msg` and `[SubComponent].Msg`
-in root component. `Component` is semanticaly similar to [`Html.Program`](http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program).
+in root component. `Component` semantics are inspirated by [`Html.Program`](http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program).
 -}
 type Component model subModel msg subMsg
     = Component
@@ -77,9 +79,9 @@ component =
 
 {-| Initialize sub-component in parent component.
 
-Init uses [applicative style](https://wiki.haskell.org/Applicative_functor) for `(a, Cmd Msg)`
+Init uses [applicative style](https://wiki.haskell.org/Applicative_functor) for `(subModel -> a, Cmd Msg)`
 similarly to [`Json.Decode.Extra.andMap`](http://package.elm-lang.org/packages/elm-community/json-extra/2.1.0/Json-Decode-Extra#andMap).
-The only diference is that `( subModel, Cmd msg )` is extracted from [`Component`](#Component) definition.
+The only diference is that `(subModel, Cmd msg)` is extracted from [`Component`](#Component) definition.
 
 ```
 type alias Model =
@@ -155,8 +157,8 @@ view (Component { view }) =
 
 {-| Subscribe to sub component subscriptions within parent component.
 
-You can think about this as about mapping and merging subscriptions.
-For mapping `subscriptions` function from [`Component`](#Component) is used
+You can think about this as about mapping and merging over subscriptions.
+For mapping part `subscriptions` function from [`Component`](#Component) is used.
 
 ```
 subscriptions : Model -> Sub Msg
@@ -186,7 +188,7 @@ subscriptions (Component { subscriptions }) mainSubscriptions =
 
 
 {-| Tiny abstraction over [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map)
-that helps you to reduce boiler plate while turning generic TEA app to [`Component`](#Component).
+packed in `(model, Cmd msg)` pair that helps you to reduce boiler plate while turning generic TEA app to [`Component`](#Component).
 
 This thing is generally usefull when turning independent elm applications to [`Component`](#Component)s.
 
