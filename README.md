@@ -129,7 +129,7 @@ make working with this pair easier. This is really the core idea of the whole `C
 
 To simplify glueing things together, the `Component` type is introduced by this package.
 In the same way that `Html.Program` glues TEA together with `init`, `update`, `view`, and `subscriptions`, `Component.Component` glues parent and child APIs.
-Unlike `Program`, `Component` is in fact just bunch of functions that do nothing by themselves.
+Unlike `Program`, `Component` is in fact just a bunch of functions that do nothing by themselves.
 Other functions within the `Component` package then use the `Component.Component` type as proxy to its glue logic.
 
 ### Using TEA App as Component
