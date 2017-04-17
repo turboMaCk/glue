@@ -1,5 +1,17 @@
 # TEA Component
 
+## WARNING!
+
+**This package is meant either for really large SPA apps written in Elm
+or for incremental transitioning from a JavaScript to an Elm app,
+which you'll want to organize differently once you get things predominantly in Elm.
+IF YOU ARE NOT EXPERIENCED ELM PROGRAMMER OR YOUR PROJECT DOESN'T REQUIRE HIGHER LEVEL
+OF MODULARITY STICK TO PLAIN TEA INSTEAD. You can always come back and add this extra level
+of complexity once you're completely sure you can benefit from it. Always grow your architecture
+as a problem you're trying to solve grows, no other way around!**
+
+**[More informations](https://www.reddit.com/r/elm/comments/5jd2xn/how_to_structure_elm_with_multiple_models/dbkpgbd/)**
+
 This package helps you to reduce boilerplate while composing TEA-based (The Elm Architecture) applications using
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
@@ -48,12 +60,14 @@ In particular, you can find:
 
 ## Why?
 
+
 TEA is an awesome way to write Html-based apps in Elm. However, not every application can be defined just in terms of `Model`, `update`, and `view`.
 Basic separation of [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program) is really nice for small apps
 but tends to grow pretty quickly in an unmanageable way. In addition, not everyone believes that keeping so much stuff in a few giant blobs is a good way
 to organize every application. The [official website](http://elm-lang.org/) claims, "No full rewrites, no huge time investment," yet it offers
 only [`interop`](https://guide.elm-lang.org/interop/) as an answer, which is nowhere near to being a full solution for moving from embedded elm components
 to Elm-only SPA (single-page app).
+
 
 It's clear that there is a real need to make TEA apps composable.
 This is when [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
