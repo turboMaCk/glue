@@ -1,5 +1,5 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "summary": "Component abstraction for TEA (The Elm Architecture)",
     "repository": "https://github.com/turboMaCk/tea-component.git",
     "license": "BSD3",
