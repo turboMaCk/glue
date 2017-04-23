@@ -5,17 +5,17 @@ import Html exposing (Html)
 
 -- Library
 
-import Component exposing (Component)
+import Glue exposing (Glue)
 
 
--- Components
+-- Submodules
 
 import Bubbling.Counter as Counter
 
 
-counter : Component Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Component.component
+    Glue.glue
         { model = \subModel model -> { model | counter = subModel }
         , init = Counter.init Even
         , update = \subMsg model -> Counter.update Even subMsg model.counter
@@ -41,7 +41,7 @@ main =
         , view = view
         , subscriptions =
             subscriptions
-                |> Component.subscriptions counter
+                |> Glue.subscriptions counter
         }
 
 
@@ -58,7 +58,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( Model False, Cmd.none )
-        |> Component.init counter
+        |> Glue.init counter
 
 
 
@@ -75,7 +75,7 @@ update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( { model | even = False }, Cmd.none )
-                |> Component.update counter counterMsg
+                |> Glue.update counter counterMsg
 
         Even ->
             ( { model | even = True }, Cmd.none )
@@ -88,7 +88,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Component.view counter model
+        [ Glue.view counter model
         , if model.even then
             Html.text "is even"
           else

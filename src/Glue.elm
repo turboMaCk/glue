@@ -27,7 +27,7 @@ import Html exposing (Html)
 {-| `Glue` defines interface mapings between parent and child module.
 
 You can create `Glue` with the [`glue`](#glue) function constructor.
-Every glue layer is defined in terms of `Model`, `[SubComponent].Model` `Msg` and `[SubComponent].Msg`.
+Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `[Submodule].Msg`.
 `Glue` semantics are inspirated by [`Html.Program`](http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program).
 -}
 type Glue model subModel msg subMsg
@@ -96,8 +96,8 @@ init =
         |> Glue.init secondCounter
 ```
 -}
-init : Component model subModel msg subMsg -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
-init (Component { init }) ( fc, cmd ) =
+init : Glue model subModel msg subMsg -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
+init (Glue { init }) ( fc, cmd ) =
     let
         ( subModel, subCmd ) =
             init
@@ -177,8 +177,8 @@ main =
         }
 ```
 -}
-subscriptions : Component model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
-subscriptions (Component { subscriptions }) mainSubscriptions =
+subscriptions : Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptions (Glue { subscriptions }) mainSubscriptions =
     \model -> Sub.batch [ mainSubscriptions model, subscriptions model ]
 
 

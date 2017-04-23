@@ -6,23 +6,23 @@ import Mouse exposing (Position)
 
 -- Library
 
-import Component exposing (Component)
+import Glue exposing (Glue)
 
 
--- Components
+-- Submodules
 
 import Subscriptions.Moves as Moves
 
 
-moves : Component Model Moves.Model Msg Moves.Msg
+moves : Glue Model Moves.Model Msg Moves.Msg
 moves =
-    Component.component
+    Glue.glue
         { model = \subModel model -> { model | moves = subModel }
-        , init = Moves.init |> Component.map MovesMsg
+        , init = Moves.init |> Glue.map MovesMsg
         , update =
             \subMsg model ->
                 Moves.update subMsg model.moves
-                    |> Component.map MovesMsg
+                    |> Glue.map MovesMsg
         , view = \model -> Html.map MovesMsg <| Moves.view model.moves
         , subscriptions = \model -> Sub.map MovesMsg <| Moves.subscriptions model.moves
         }
@@ -44,7 +44,7 @@ main =
         , view = view
         , subscriptions =
             subscriptions
-                |> Component.subscriptions moves
+                |> Glue.subscriptions moves
         }
 
 
@@ -61,7 +61,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( Model 0, Cmd.none )
-        |> Component.init moves
+        |> Glue.init moves
 
 
 
@@ -78,7 +78,7 @@ update msg model =
     case msg of
         MovesMsg movesMsg ->
             ( model, Cmd.none )
-                |> Component.update moves movesMsg
+                |> Glue.update moves movesMsg
 
         Clicked _ ->
             ( { model | clicks = model.clicks + 1 }, Cmd.none )
@@ -94,6 +94,6 @@ view model =
         [ Html.text <| "Clicks: " ++ (toString model.clicks)
         , Html.div []
             [ Html.text "Position: "
-            , Component.view moves model
+            , Glue.view moves model
             ]
         ]
