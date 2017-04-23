@@ -1,13 +1,13 @@
 {
-    "version": "1.0.1",
-    "summary": "Component abstraction for TEA (The Elm Architecture)",
+    "version": "1.0.0",
+    "summary": "Composing TEA modules with isolated Models",
     "repository": "https://github.com/turboMaCk/tea-component.git",
     "license": "BSD3",
     "source-directories": [
         "src"
     ],
     "exposed-modules": [
-        "Component"
+        "Glue"
     ],
     "dependencies": {
         "elm-lang/core": "5.1.1 <= v < 6.0.0",

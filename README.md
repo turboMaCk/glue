@@ -1,4 +1,4 @@
-# TEA Component
+# Glue
 
 ## WARNING!
 
