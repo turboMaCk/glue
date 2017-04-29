@@ -1,7 +1,7 @@
 {
     "version": "1.0.0",
-    "summary": "Composing TEA modules with isolated Models",
-    "repository": "https://github.com/turboMaCk/tea-component.git",
+    "summary": "Composing TEA modules with isolated state",
+    "repository": "https://github.com/turboMaCk/glue.git",
     "license": "BSD3",
     "source-directories": [
         "src"
