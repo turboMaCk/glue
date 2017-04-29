@@ -5,23 +5,23 @@ import Html exposing (Html)
 
 -- Library
 
-import Component exposing (Component)
+import Glue exposing (Glue)
 
 
--- Components
+-- Submodules
 
 import Counter.Counter as Counter
 
 
-counter : Component Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Component.component
+    Glue.glue
         { model = \subModel model -> { model | counter = subModel }
-        , init = Counter.init |> Component.map CounterMsg
+        , init = Counter.init |> Glue.map CounterMsg
         , update =
             \subMsg model ->
                 Counter.update subMsg model.counter
-                    |> Component.map CounterMsg
+                    |> Glue.map CounterMsg
         , view = \model -> Html.map CounterMsg <| Counter.view model.counter
         , subscriptions = \_ -> Sub.none
         }
@@ -44,7 +44,7 @@ main =
         , view = view
         , subscriptions =
             subscriptions
-                |> Component.subscriptions counter
+                |> Glue.subscriptions counter
         }
 
 
@@ -61,7 +61,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( Model "Let's change cunter!", Cmd.none )
-        |> Component.init counter
+        |> Glue.init counter
 
 
 
@@ -77,7 +77,7 @@ update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( { model | message = "Counter has changed!" }, Cmd.none )
-                |> Component.update counter counterMsg
+                |> Glue.update counter counterMsg
 
 
 
@@ -88,5 +88,5 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.text model.message
-        , Component.view counter model
+        , Glue.view counter model
         ]
