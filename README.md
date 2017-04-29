@@ -49,15 +49,15 @@ $ elm-package install turboMaCk/glue
 
 ## Examples
 
-The best place to start is probably to have a look at [examples](https://github.com/turboMaCk/component/tree/master/examples).
+The best place to start is probably to have a look at [examples](https://github.com/turboMaCk/glue/tree/master/examples).
 
 In particular, you can find:
 
-### [Transforming Isolated Elm Apps together using Glue](https://github.com/turboMaCk/component/tree/master/examples/counter)
+### [Transforming Isolated Elm Apps together using Glue](https://github.com/turboMaCk/glue/tree/master/examples/counter)
 
-### [Composing Modules with Subscriptions](https://github.com/turboMaCk/component/tree/master/examples/subscriptions)
+### [Composing Modules with Subscriptions](https://github.com/turboMaCk/glue/tree/master/examples/subscriptions)
 
-### [Action Bubbling (Sending Actions from Child to Parent)](https://github.com/turboMaCk/component/tree/master/examples/bubbling)
+### [Action Bubbling (Sending Actions from Child to Parent)](https://github.com/turboMaCk/glue/tree/master/examples/bubbling)
 
 ## Why?
 
@@ -96,7 +96,7 @@ type Msg
     | ...
 ```
 
-Basically, the top-level component only holds the `Model` of a sub-component as a single value, and wraps its `Msg` inside one of its `Msg` constructors.
+Basically, the top-level module only holds the `Model` of a sub-module as a single value, and wraps its `Msg` inside one of its `Msg` constructors.
 Of course, `init`, `update`, and `subscriptions` also have to know how to work with this part of `Model`, and there you need
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
 [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) and
@@ -189,23 +189,23 @@ And this is our `init`, `update` and `view`:
 init : ( Model, Cmd msg )
 init =
     ( Model, Cmd.none )
-        |> Component.init counter
+        |> Glue.init counter
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( model, Cmd.none )
-                |> Component.update counter counterMsg
+                |> Glue.update counter counterMsg
 
 view : Model -> Html Msg
 view =
-    Component.view counter
+    Glue.view counter
 ```
 
 ### Wrap Polymorphic Module
 
-A "polymorphic module" is what I call TEA components that have to be integrated into some other app *(I know this is not really the best name, ideas?)*.
+A "polymorphic module" is what I call TEA modules that have to be integrated into some other app *(I know this is not really the best name, ideas?)*.
 This basically means they are using `Cmd.map`, `Html.map`, and `Sub.map` internally. Let's make `Counter.elm` polymorphic so it's clear what this mean.
 This will require us to add one extra argument to counter's `view` function and a small change to the type annotations of `init` and `update`:
 
@@ -239,12 +239,12 @@ counter =
         }
 ```
 
-This is all that is required when a child component's API changes.
+This is all that is required when a child module's API changes.
 Since the `Glue` type holds all mappings in one place, there is no need for changes in the parent's `init`, `update`, or `view` functions.
 
 ### Action Bubbling
 
-If your component is [polymorphic](#Wrap-Polymorphic-Module) you can easily send `Cmd` to its parent.
+If your module is [polymorphic](#Wrap-Polymorphic-Module) you can easily send `Cmd` to its parent.
 Please check [cmd-extra](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/latest) package
 which helps you construct `Cmd Msg` from `Msg`.
 
@@ -252,7 +252,7 @@ which helps you construct `Cmd Msg` from `Msg`.
 You can always expose `Msg` constructor from child (`exposing(Msg(..))`) and match it in parent. Anyway if you need to do such a thing
 you maybe made a mistake while designing separation of state. Do these states really need to be separated?**
 
-Using `Cmd` for communication with upper component works like this:
+Using `Cmd` for communication with upper module works like this:
 
 ```text
     +------------------------------------+
@@ -345,12 +345,12 @@ Because we've changed `Model` (added `even : Bool`) we should change `init` and 
 init : ( Model, Cmd Msg )
 init =
     ( Model False, Cmd.none )
-        |> Component.init counter
+        |> Glue.init counter
 
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Component.view counter model
+        [ Glue.view counter model
         , Html.text
             (if model.even then
                 "is even"
@@ -367,7 +367,7 @@ update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( { model | even = False }, Cmd.none )
-                |> Component.update counter counterMsg
+                |> Glue.update counter counterMsg
 
         Even ->
             ( { model | even = True }, Cmd.none )
@@ -398,7 +398,7 @@ counter =
 There we simply pass the parent's `Even` constructor to the `update` and `init` functions of the child.
 This is all we need to do to wire `Cmd` from child to parent.
 
-See this [complete example](https://github.com/turboMaCk/component/tree/master/examples/bubbling) to learn more.
+See this [complete example](https://github.com/turboMaCk/glue/tree/master/examples/bubbling) to learn more.
 
 ## Re-evaluating and Future Work
 
