@@ -161,20 +161,10 @@ For mapping part `subscriptions` function from [`Glue`](#Glue) is used.
 
 ```
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Mouse.clicks Clicked
-
-
-main =
-    Html.program
-        { init = init
-        , update = update
-        , view = view
-        , subscriptions =
-            subscriptions
-                |> Glue.subscriptions subComponent
-                |> Glue.subscriptions anotherNestedComponent
-        }
+subscriptions =
+    (\model -> Mouse.clicks Clicked)
+        |> Glue.subscriptions subComponent
+        |> Glue.subscriptions anotherNestedComponent
 ```
 -}
 subscriptions : Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)

@@ -4,7 +4,7 @@ This package helps you to reduce boilerplate while composing TEA-based (The Elm 
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
 and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
-`Glue` uses really thin abstraction over so it's easy to plug it in and out.
+`Glue` is just thin abstraction over these functions so it's easy to plug it in and out.
 It's fair to say that `Glue` is an alternative to [elm-parts](http://package.elm-lang.org/packages/debois/elm-parts/latest),
 but uses a different approach (no better or worse) for composing isolated pieces/modules together.
 
@@ -14,22 +14,23 @@ Feedback and contributions to both code and documentation are very welcome.
 
 ## Important Note!
 
-This package is not necessary designed for either code splitting or code reuse but rather for **state separation**.
+This package is not necessary designed for either code splitting or reuse but rather for **state separation**.
 State separation might and might not be important for reusing certain parts of application.
 Not everything is necessary stateful. For instance many UI parts can be express just by using `view` function
-to which you can pass `msg` constructors (`view : msg -> Model -> Html msg` for instance) and manage by it's consumer.
-On the other hand some things like larger parts of applications or components containing lot of self-maintainable stateful logic
-can benefit from this isolation since it reduces state handling imposed on consumer of that module.
-Generally it's good rule to always choose simpler approach - *If you aren't sure if you can benefit from extra isolation
-(And using stateless abstraction is usually simpler)*. Always try to define as much logic as you can
-using just simple functions and data and then think about possible state separation in places where you feel too much state
-is exposed.
+to which you pass `msg` constructors (`view : msg -> Model -> Html msg` for instance) and let consumer to manage it's state.
+On the other hand some things like larger parts of applications or parts containing a lot of self-maintainable stateful logic
+can benefit from state isolation since it reduces state handling imposed on consumer of that module.
+Generally it's good rule to always choose simpler approach (And using stateless abstraction is usually simpler) -
+*If you aren't sure if you can benefit from extra isolation don't use it.* Always try to define as much logic as you can
+using just simple functions and data. Then you can think about possible state separation in places where too much of it is exposed.
+**First rule is to avoid breaking of [single source of truth principle](https://en.wikipedia.org/wiki/Single_source_of_truth)**.
+If you find yourself synchronizing some state from one place to another than that state shouldn't be probably isolated in first place.
 
 
 ## tl;dr
 
-This package is a result of my experience with building larger application in elm where some modules uses rather complex
-state management in which the rest of the application is not involved. The goals and features of this package are:
+This package is a result of my experience with building larger application in Elm where some modules lives in isolation from others.
+The goals and features of this package are:
 
 - Reduce boilerplate in `update` and `init` functions.
 - Reduce [indirection](https://en.wikipedia.org/wiki/Indirection) in glueing between parent and child module.
@@ -46,11 +47,11 @@ $ elm-package install turboMaCk/glue
 
 ## Examples
 
-Best place to start is probably to have a look at [examples](https://github.com/turboMaCk/component/tree/master/examples).
+The best place to start is probably to have a look at [examples](https://github.com/turboMaCk/component/tree/master/examples).
 
 In particular, you can find:
 
-### [Transforming Isolated Elm App to Module](https://github.com/turboMaCk/component/tree/master/examples/counter)
+### [Transforming Isolated Elm Apps together using Glue](https://github.com/turboMaCk/component/tree/master/examples/counter)
 
 ### [Composing Modules with Subscriptions](https://github.com/turboMaCk/component/tree/master/examples/subscriptions)
 
@@ -58,24 +59,24 @@ In particular, you can find:
 
 ## Why?
 
-
 TEA is an awesome way to write Html-based apps in Elm. However, not every application can be defined just in terms of single `Model` and `Msg`.
 Basic separation of [`Html.program`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#program) is really nice
-but in some cases this triplet this to grow pretty quickly in an unmanageable so you need to start breaking things.
+but in some cases these functions grow pretty quickly in an unmanageable way so you need to start breaking things.
 
 There are [many ways](https://www.reddit.com/r/elm/comments/5jd2xn/how_to_structure_elm_with_multiple_models/dbkpgbd/)
-you can start. In particular rest of this document is focus just on [separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns).
-This technique is useful for isolating parts that really do not need know too much about each other. It helps to reduce number of things
-programmer has to and can manage while adding or changing behaviour of such a isolated part of system.
+you can start. In particular rest of this document will focus just on [separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns).
+This technique is useful for isolating parts that really don't need know too much about each other. It helps to reduce number of things particular module is touching,
+has to and can manage while adding or changing behaviour of such a isolated part of system. In tea this is especially touching `Msg` type and `update` function.
+Using techniques described below you can split `update` logic and `Msg` type so some modules are partially or fully responsible for updating their own part of overall `Model`.
 
 **It's important to understand that `init` `update` `view` and `subscriptions` are all isolated functions connected via `Html.program`.
-In pure functional programming we're "never" really managing state but rather composing functions and data together.**
+In pure functional programming we're "never" really managing state yourself but rather composing functions that takes state as data to produce new version of it.**
 
-This is when [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
+Lets have a look on how we can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
-and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) can become handy.
-They allow you to start nesting `init`, `update`, `subscriptions` and `view` in a way that some parts of application
-can manage only certain subset of whole state (`Model`). Higher level module is then using these units to manage just this subset of his overall state.
+and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) for separation in Elm app.
+You can use them for nesting `init`, `update`, `subscriptions` and `view`.
+Higher level module is then using these units to manage just this subset of his overall state (`Model`).
 Here is how the `Model` and `Msg` types of a parent application might look:
 
 ```elm
@@ -134,7 +135,7 @@ You can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0
 And this is as far as pure TEA goes. This may possibly be good fit for your needs, and that's OK. Why might you still want to use this package?
 
 - It helps keep your `update`, `init`, `view` `subscriptions` clean from wiring logic.
-- It enforces very abstract interface of mapping between these functions with very little implementation overhead.
+- It enforces very abstract interface of mapping between these functions with just little implementation overhead.
 - It uses record to keep wiring in single namespace which reduces indirection in interface definition.
 
 ## How?
@@ -143,10 +144,10 @@ And this is as far as pure TEA goes. This may possibly be good fit for your need
 make working with this pair easier. This is really the core idea of the whole `Glue` package.**
 
 To simplify glueing things together, the `Gue` type is introduced by this package.
-This is simply just a namespace for glueing logic to which you can then refer using single name.
+This is simply just a namespace for pure functionsthat defines interface between modules to which you can then refer using single name.
 Other functions within the `Glue` package then use the `Glue.Glue` type as proxy to access these functions.
 
-### Glueing indipendent TEA App
+### Glueing independent TEA App
 
 This is how we can construct the `Glue` type for [counter example](https://guide.elm-lang.org/architecture/user_input/buttons.html):
 
@@ -202,7 +203,7 @@ view =
 
 ### Wrap Polymorphic Module
 
-A "polymorphic component" is what I call TEA components that have to be integrated into some other app *(I know this is not really the best name, ideas?)*.
+A "polymorphic module" is what I call TEA components that have to be integrated into some other app *(I know this is not really the best name, ideas?)*.
 This basically means they are using `Cmd.map`, `Html.map`, and `Sub.map` internally. Let's make `Counter.elm` polymorphic so it's clear what this mean.
 This will require us to add one extra argument to counter's `view` function and a small change to the type annotations of `init` and `update`:
 
@@ -241,7 +242,7 @@ Since the `Glue` type holds all mappings in one place, there is no need for chan
 
 ### Action Bubbling
 
-If your component is [polymorphic](#wrap-polymorphic-component) you can easily send `Cmd` to its parent.
+If your component is [polymorphic](#Wrap-Polymorphic-Module) you can easily send `Cmd` to its parent.
 Please check [cmd-extra](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/latest) package
 which helps you construct `Cmd Msg` from `Msg`.
 
@@ -257,7 +258,7 @@ Using `Cmd` for communication with upper component works like this:
     v                                    |
 +-----------------------------------+    |
 |                                   |    |
-| Parent Component                  |    |
+| Parent Module                     |    |
 |                                   |    +
 |   +                               |  Cmd Msg
 |   |                               |    |
@@ -265,7 +266,7 @@ Using `Cmd` for communication with upper component works like this:
 |   |                               |    |
 |   |   +------------------------+  |    |
 |   |   |                        |  |    |
-|   |   | Child Component        |  |    |
+|   |   | Child Module           |  |    |
 |   |   |                        |  |    |
 |   +-> |                        +-------+
 |       +------------------------+  |
@@ -322,7 +323,7 @@ update notify msg model =
 ```
 
 Now both `init` and `update` should send `Cmd` when `Model` is an even number.
-This is a breaking change to `Counter`'s API so we will need to change its parent integration as well.
+This is a breaking change to `Counter`'s API so we need to change its integration as well.
 Since we want to actually use this message and do something with it let me first update the parent's `Msg` and `Model`:
 
 ```elm
@@ -336,7 +337,7 @@ type Msg
     | Even
 ```
 
-Because we've changed `Model` (added `even : Bool`) we should change `init` and `view` as well:
+Because we've changed `Model` (added `even : Bool`) we should change `init` and `view` like:
 
 ```elm
 init : ( Model, Cmd Msg )
@@ -356,7 +357,7 @@ view model =
         ]
 ```
 
-This completes the changes to `Model`. Now we need to update our `update` function so it can handle the `Even` message.
+This completes the changes to `Model`. Now we want to update `update` function so it can handle the `Even` message.
 
 ```elm
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -373,10 +374,10 @@ update msg model =
 As you can see we're setting `even` to `False` on every `CounterMsg`.
 This is because `Counter` is just emitting `Cmd` when its `Model` is Even.
 
-Now we need to handle the `Even` action itself. This simply sets `even = True` in the model.
+To handle the `Even` action itself. This simply sets `even = True` in the model.
 
 *This is to show you why you might need to update both the parent's and child's `Model` on a single `Msg` (`CounterMsg` in this case), and how to do it.
-Anyway this is just really simple example. In real world you probably don't want to use `Cmd` for things like these.*
+Anyway this is just really simple example. In real world you probably don't want to use `Cmd` for things as like this.*
 
 Since the parent is ready to handle actions from `Counter` our last step is simply to update the `Glue` construction for the new APIs:
 
@@ -403,7 +404,8 @@ This package is still in a really early stage of development and needs to be tes
 Personally I still need to sort out a few things.
 For instance is it really a good idea to include `view` handling. Or if its API is really right.
 First of all `view` is not really related to `(Model, Cmd msg)` pair itself.
-Also view API might be a lot different. For example you might want to pass route to it.
+Also view is API are usually thing that varies most between modules. On the other hand it's nice
+to refer to modules view same way you refer to it's update.
 Anyway since this package is still in early experimental stage I'll leave this question open.
 
 ## License
