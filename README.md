@@ -1,5 +1,7 @@
 # Glue
 
+[![Build Status](https://travis-ci.org/turboMaCk/glue.svg?branch=master)](https://travis-ci.org/turboMaCk/glue)
+
 This package helps you to reduce boilerplate while composing TEA-based (The Elm Architecture) applications using
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
