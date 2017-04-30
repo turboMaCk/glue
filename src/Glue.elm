@@ -2,7 +2,7 @@ module Glue exposing (Glue, glue, init, update, view, subscriptions, map)
 
 {-| Composing Elm applications from smaller isolated parts (modules).
 You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
-that reduces boilerplate while composing `init` `update` `view` and subscribe using
+that reduces boilerplate required for composing `init` `update` `view` and `subscribe` using
 [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
 and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
@@ -28,7 +28,6 @@ import Html exposing (Html)
 
 You can create `Glue` with the [`glue`](#glue) function constructor.
 Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `[Submodule].Msg`.
-`Glue` semantics are inspirated by [`Html.Program`](http://package.elm-lang.org/packages/elm-lang/core/latest/Platform#Program).
 -}
 type Glue model subModel msg subMsg
     = Glue
@@ -40,9 +39,9 @@ type Glue model subModel msg subMsg
         }
 
 
-{-| Create [Glue](#Glue) by defining mapigs of types between modules.
-child module can be generic TEA app or module that is already doing maping to generic `msg` internaly.
-You can also use `Cmd` for sending data from bottom component to upper one if you want to observe child
+{-| Create [Glue](#Glue) mapigs between modules.
+child module can be generic TEA app or module that is already doing polymorfic maping to generic `msg` internaly.
+You can also use `Cmd` for sending data from bottom module to upper one if you want to observe child
 as a black box (similary you do in case of DOM events with `Html.Events`).
 
 **Interface**:
@@ -58,7 +57,7 @@ glue :
     -> Glue model subModel msg subMsg
 ```
 
-See [examples](https://github.com/turboMaCk/component/tree/master/examples) for more informations.
+See [examples](https://github.com/turboMaCk/glue/tree/master/examples) for more informations.
 -}
 glue :
     { model : subModel -> model -> model
@@ -163,8 +162,8 @@ For mapping part `subscriptions` function from [`Glue`](#Glue) is used.
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\model -> Mouse.clicks Clicked)
-        |> Glue.subscriptions subComponent
-        |> Glue.subscriptions anotherNestedComponent
+        |> Glue.subscriptions subModlue
+        |> Glue.subscriptions anotherNestedModule
 ```
 -}
 subscriptions : Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
@@ -177,9 +176,9 @@ subscriptions (Glue { subscriptions }) mainSubscriptions =
 
 
 {-| Tiny abstraction over [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map)
-packed in `(model, Cmd msg)` pair that helps you to reduce boiler plate while turning generic TEA app to [`Component`](#Component).
+packed in `(model, Cmd msg)` pair that helps you to reduce boilerplate while turning generic TEA app to [`Glue`](#Glue).
 
-This thing is generally usefull when turning independent elm applications to [`Component`](#Component)s.
+This function is generally usefull for turning update and init functions in `[Glue](#Glue)` definition.
 
 ```
 type alias Model =
@@ -190,9 +189,9 @@ type alias Model =
 type Msg
     = CounterMsg Counter.Msg
 
-counter : Component Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Glue.component
+    Glue.glue
         { model = \subModel model -> { model | counter = subModel }
         , init = Counter.init |> Glue.map CounterMsg
         , update =
