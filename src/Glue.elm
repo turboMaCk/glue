@@ -1,4 +1,4 @@
-module Glue exposing (Glue, glue, init, update, view, subscriptions, map)
+module Glue exposing (Glue, glue, init, update, view, subscriptions, map, createglue)
 
 {-| Composing Elm applications from smaller isolated parts (modules).
 You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
@@ -69,6 +69,52 @@ glue :
     -> Glue model subModel msg subMsg
 glue =
     Glue
+
+
+{-| Create [Glue](#Glue) mapigs between modules.
+child module can be generic TEA app or module that is already doing polymorfic maping to generic `msg` internaly.
+You can also use `Cmd` for sending data from bottom module to upper one if you want to observe child
+as a black box (similary you do in case of DOM events with `Html.Events`).
+
+**Interface**:
+
+    createglue :
+          { modelsetter = \subModel model -> { model | subModel = subModel }
+          , modelgetter = .subModel
+          , init =  ( subModel, Cmd subMsg )
+          , update = subMsg -> subModel -> ( subModel, Cmd msg )
+          , view = subModel -> Html subMsg
+          , subscriptions = subModel -> Sub subMsg
+          , liftmessage = subMsg -> msg
+          }
+        -> Glue model subModel msg subMsg
+
+See [examples](https://github.com/turboMaCk/glue/tree/master/examples) for more informations.
+
+-}
+createglue :
+    { e
+        | init : ( subModel, Cmd subMsg )
+        , liftmessage : subMsg -> msg
+        , modelgetter : model -> subModel
+        , modelsetter : subModel -> model -> model
+        , subscriptions : subModel -> Sub subMsg
+        , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
+        , view : subModel -> Html subMsg
+    }
+    -> Glue model subModel msg subMsg
+createglue config =
+    glue <|
+        { model = config.modelsetter
+        , init = config.init |> map config.liftmessage
+        , update =
+            \subMsg model ->
+                config.modelgetter model
+                    |> config.update subMsg
+                    |> map config.liftmessage
+        , view = \model -> Html.map config.liftmessage <| config.view <| config.modelgetter model
+        , subscriptions = \model -> Sub.map config.liftmessage <| config.subscriptions <| config.modelgetter model
+        }
 
 
 
