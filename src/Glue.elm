@@ -1,4 +1,4 @@
-module Glue exposing (Glue, glue, init, update, view, subscriptions, map, createglue)
+module Glue exposing (Glue, glue, init, update, view, subscriptions, map, createglue, bubbling)
 
 {-| Composing Elm applications from smaller isolated parts (modules).
 You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
@@ -8,7 +8,7 @@ that reduces boilerplate required for composing `init` `update` `view` and `subs
 and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
 
 # Types
-@docs Glue, glue
+@docs Glue, glue, createglue, bubbling
 
 # Basics
 
@@ -114,6 +114,31 @@ createglue config =
                     |> map config.liftmessage
         , view = \model -> Html.map config.liftmessage <| config.view <| config.modelgetter model
         , subscriptions = \model -> Sub.map config.liftmessage <| config.subscriptions <| config.modelgetter model
+        }
+
+
+{-| Spike -}
+bubbling :
+    { e
+        | init : ( subModel, Cmd msg )
+        , liftmessage : subMsg -> msg
+        , modelgetter : model -> subModel
+        , modelsetter : subModel -> model -> model
+        , subscriptions : subModel -> Sub msg
+        , update : subMsg -> subModel -> ( subModel, Cmd msg )
+        , view : subModel -> Html msg
+    }
+    -> Glue model subModel msg subMsg
+bubbling config =
+    glue <|
+        { model = config.modelsetter
+        , init = config.init
+        , update =
+            \subMsg model ->
+                config.modelgetter model
+                    |> config.update subMsg
+        , view = \model -> config.view <| config.modelgetter model
+        , subscriptions = \model -> config.subscriptions <| config.modelgetter model
         }
 
 

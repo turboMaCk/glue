@@ -61,12 +61,14 @@ moves =
 
 bubblingcounter : Glue Model BubblingCounter.Model Msg BubblingCounter.Msg
 bubblingcounter =
-    Glue.glue
-        { model = \subModel model -> { model | bubblingcounter = subModel }
+    Glue.bubbling
+        { modelsetter = \subModel model -> { model | bubblingcounter = subModel }
+        , modelgetter = .bubblingcounter
         , init = BubblingCounter.init Even
-        , update = \subMsg model -> BubblingCounter.update Even subMsg model.bubblingcounter
-        , view = \model -> BubblingCounter.view BubblingCounterMsg model.bubblingcounter
+        , update = BubblingCounter.update Even
+        , view = BubblingCounter.view BubblingCounterMsg
         , subscriptions = \_ -> Sub.none
+        , liftmessage = BubblingCounterMsg
         }
 
 
