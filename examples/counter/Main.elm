@@ -1,5 +1,12 @@
 module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
 
+{-| This show how you can glue really simple statefull submodule.
+
+This example is quite artificial in order to keep things simple.
+In real world it probably doesn't make sense to use similar approach
+for something as simple as this application.
+-}
+
 import Html exposing (Html)
 
 

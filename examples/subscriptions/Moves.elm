@@ -1,5 +1,10 @@
 module Subscriptions.Moves exposing (Model, Msg, init, update, view, subscriptions)
 
+{-| This demostrates how subscription composition works with glueing.
+
+Please be aware that this example was made just for purposes of this demonstration.
+-}
+
 import Html exposing (Html)
 import Mouse exposing (Position)
 

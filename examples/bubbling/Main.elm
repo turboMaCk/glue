@@ -1,5 +1,11 @@
 module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions)
 
+{-| This is example of child to parent communication using Cmd bubbling.
+
+This Example works as demonstration of such a communication and do not really
+reflect real world use-case for this practice.
+-}
+
 import Html exposing (Html)
 
 
