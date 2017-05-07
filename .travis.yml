@@ -43,5 +43,5 @@ install:
   - pushd examples && elm-package install --yes && popd
 
 script:
-  - elm-make
+  - elm-make --yes
   - pushd examples && elm-make Main.elm --yes && popd
