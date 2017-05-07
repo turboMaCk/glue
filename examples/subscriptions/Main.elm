@@ -1,6 +1,8 @@
 module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 import Html exposing (Html)
+import Html.Attributes as HtmlA
+import Html.Events exposing (onCheck)
 import Mouse exposing (Position)
 
 
@@ -34,7 +36,11 @@ moves =
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\_ -> Mouse.clicks Clicked)
-        |> Glue.subscriptions moves
+        |> \sub model ->
+            if model.movesOn then
+                Glue.subscriptions moves sub model
+            else
+                sub model
 
 
 main =
@@ -52,13 +58,14 @@ main =
 
 type alias Model =
     { clicks : Int
+    , movesOn : Bool
     , moves : Moves.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0, Cmd.none )
+    ( Model 0 True, Cmd.none )
         |> Glue.init moves
 
 
@@ -69,6 +76,7 @@ init =
 type Msg
     = Clicked Position
     | MovesMsg Moves.Msg
+    | ToggleMoves Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -81,6 +89,9 @@ update msg model =
         Clicked _ ->
             ( { model | clicks = model.clicks + 1 }, Cmd.none )
 
+        ToggleMoves bool ->
+            ( { model | movesOn = bool }, Cmd.none )
+
 
 
 -- View
@@ -90,6 +101,15 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.text <| "Clicks: " ++ (toString model.clicks)
+        , Html.label [ HtmlA.style [ ( "display", "block" ) ] ]
+            [ Html.text "subscribe to mouse moves"
+            , Html.input
+                [ onCheck ToggleMoves
+                , HtmlA.type_ "checkbox"
+                , HtmlA.checked model.movesOn
+                ]
+                []
+            ]
         , Html.div []
             [ Html.text "Position: "
             , Glue.view moves model
