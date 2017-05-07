@@ -16,15 +16,14 @@ import Subscriptions.Moves as Moves
 
 moves : Glue Model Moves.Model Msg Moves.Msg
 moves =
-    Glue.glue
-        { model = \subModel model -> { model | moves = subModel }
-        , init = Moves.init |> Glue.map MovesMsg
-        , update =
-            \subMsg model ->
-                Moves.update subMsg model.moves
-                    |> Glue.map MovesMsg
-        , view = \model -> Html.map MovesMsg <| Moves.view model.moves
-        , subscriptions = \model -> Sub.map MovesMsg <| Moves.subscriptions model.moves
+    Glue.simple
+        { msg = MovesMsg
+        , accessModel = .moves
+        , updateModel = \subModel model -> { model | moves = subModel }
+        , init = Moves.init
+        , update = Moves.update
+        , view = Moves.view
+        , subscriptions = Moves.subscriptions
         }
 
 

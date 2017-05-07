@@ -15,14 +15,13 @@ import Counter.Counter as Counter
 
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Glue.glue
-        { model = \subModel model -> { model | counter = subModel }
-        , init = Counter.init |> Glue.map CounterMsg
-        , update =
-            \subMsg model ->
-                Counter.update subMsg model.counter
-                    |> Glue.map CounterMsg
-        , view = \model -> Html.map CounterMsg <| Counter.view model.counter
+    Glue.simple
+        { msg = CounterMsg
+        , accessModel = .counter
+        , updateModel = \subModel model -> { model | counter = subModel }
+        , init = Counter.init
+        , update = Counter.update
+        , view = Counter.view
         , subscriptions = \_ -> Sub.none
         }
 
@@ -32,8 +31,9 @@ counter =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+subscriptions =
+    (\_ -> Sub.none)
+        |> Glue.subscriptions counter
 
 
 main : Program Never Model Msg
@@ -42,9 +42,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions =
-            subscriptions
-                |> Glue.subscriptions counter
+        , subscriptions = subscriptions
         }
 
 
