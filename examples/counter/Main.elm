@@ -1,4 +1,4 @@
-module Counter.Main exposing (main)
+module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 import Html exposing (Html)
 

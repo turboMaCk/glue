@@ -1,4 +1,4 @@
-module Bubbling.Main exposing (main)
+module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 import Html exposing (Html)
 

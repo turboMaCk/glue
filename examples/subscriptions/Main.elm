@@ -1,4 +1,4 @@
-module Subscriptions.Main exposing (main)
+module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 import Html exposing (Html)
 import Mouse exposing (Position)
@@ -33,8 +33,9 @@ moves =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Mouse.clicks Clicked
+subscriptions =
+    (\_ -> Mouse.clicks Clicked)
+        |> Glue.subscriptions moves
 
 
 main =
@@ -42,9 +43,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions =
-            subscriptions
-                |> Glue.subscriptions moves
+        , subscriptions = subscriptions
         }
 
 
