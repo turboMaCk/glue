@@ -11,6 +11,7 @@ applications into single html using multiple `embed`s.
 -}
 
 import Html exposing (..)
+import Html.Attributes exposing (..)
 import Glue exposing (Glue)
 
 
@@ -107,11 +108,40 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    main_ []
-        [ Glue.view counter model
-        , Glue.view bubbling model
-        , Glue.view subscriptions model
-        ]
+    let
+        line =
+            hr [ style [ ( "border", "1px solid rgb(209, 230, 236)" ) ] ]
+                []
+    in
+        div
+            [ style
+                [ ( "background", "rgb(209, 230, 236)" )
+                , ( "position", "absolute" )
+                , ( "width", "100%" )
+                , ( "height", "100%" )
+                , ( "padding", "15% 0" )
+                , ( "font-family", "Helvetica, Arial, sans-serif" )
+                ]
+            ]
+            [ main_
+                [ style
+                    [ ( "text-align", "center" )
+                    , ( "width", "300px" )
+                    , ( "line-height", "2em" )
+                    , ( "margin", "0 auto" )
+                    , ( "padding", "20px 12px" )
+                    , ( "background", "white" )
+                    , ( "box-shadow", "0px 2px 4px rgba(0,0,0,.2)" )
+                    , ( "border-radius", "3px" )
+                    ]
+                ]
+                [ Glue.view counter model
+                , line
+                , Glue.view bubbling model
+                , line
+                , Glue.view subscriptions model
+                ]
+            ]
 
 
 

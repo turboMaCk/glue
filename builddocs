@@ -1,0 +1,5 @@
+#! /bin/sh
+
+cd examples
+elm-make Main.elm --output=../docs/index.html
+cd ..
