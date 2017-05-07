@@ -1,6 +1,8 @@
-module Subscriptions.Main exposing (main)
+module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 import Html exposing (Html)
+import Html.Attributes as HtmlA
+import Html.Events exposing (onCheck)
 import Mouse exposing (Position)
 
 
@@ -16,15 +18,14 @@ import Subscriptions.Moves as Moves
 
 moves : Glue Model Moves.Model Msg Moves.Msg
 moves =
-    Glue.glue
-        { model = \subModel model -> { model | moves = subModel }
-        , init = Moves.init |> Glue.map MovesMsg
-        , update =
-            \subMsg model ->
-                Moves.update subMsg model.moves
-                    |> Glue.map MovesMsg
-        , view = \model -> Html.map MovesMsg <| Moves.view model.moves
-        , subscriptions = \model -> Sub.map MovesMsg <| Moves.subscriptions model.moves
+    Glue.simple
+        { msg = MovesMsg
+        , accessModel = .moves
+        , updateModel = \subModel model -> { model | moves = subModel }
+        , init = Moves.init
+        , update = Moves.update
+        , view = Moves.view
+        , subscriptions = Moves.subscriptions
         }
 
 
@@ -33,8 +34,9 @@ moves =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Mouse.clicks Clicked
+subscriptions =
+    (\_ -> Mouse.clicks Clicked)
+        |> Glue.subscriptionsWhen .movesOn moves
 
 
 main =
@@ -42,9 +44,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions =
-            subscriptions
-                |> Glue.subscriptions moves
+        , subscriptions = subscriptions
         }
 
 
@@ -54,13 +54,14 @@ main =
 
 type alias Model =
     { clicks : Int
+    , movesOn : Bool
     , moves : Moves.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model 0, Cmd.none )
+    ( Model 0 True, Cmd.none )
         |> Glue.init moves
 
 
@@ -71,6 +72,7 @@ init =
 type Msg
     = Clicked Position
     | MovesMsg Moves.Msg
+    | ToggleMoves Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -83,6 +85,9 @@ update msg model =
         Clicked _ ->
             ( { model | clicks = model.clicks + 1 }, Cmd.none )
 
+        ToggleMoves bool ->
+            ( { model | movesOn = bool }, Cmd.none )
+
 
 
 -- View
@@ -92,6 +97,15 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.text <| "Clicks: " ++ (toString model.clicks)
+        , Html.label [ HtmlA.style [ ( "display", "block" ) ] ]
+            [ Html.text "subscribe to mouse moves"
+            , Html.input
+                [ onCheck ToggleMoves
+                , HtmlA.type_ "checkbox"
+                , HtmlA.checked model.movesOn
+                ]
+                []
+            ]
         , Html.div []
             [ Html.text "Position: "
             , Glue.view moves model

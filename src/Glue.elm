@@ -1,4 +1,16 @@
-module Glue exposing (Glue, glue, init, update, view, subscriptions, map, createglue, bubbling)
+module Glue
+    exposing
+        ( Glue
+        , simple
+        , poly
+        , glue
+        , init
+        , update
+        , view
+        , subscriptions
+        , subscriptionsWhen
+        , map
+        )
 
 {-| Composing Elm applications from smaller isolated parts (modules).
 You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
@@ -7,15 +19,19 @@ that reduces boilerplate required for composing `init` `update` `view` and `subs
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
 and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map).
 
-# Types
-@docs Glue, glue, createglue, bubbling
+# Datatype Definition
+
+@docs Glue
+
+# Constructors
+
+@docs simple, poly, glue
 
 # Basics
 
-@docs init, update, view, subscriptions
+@docs init, update, view, subscriptions, subscriptionsWhen
 
 # Helpers
-Helpers functions
 
 @docs map
 
@@ -39,12 +55,107 @@ type Glue model subModel msg subMsg
         }
 
 
+{-| Create simple [Glue](#Glue) mappig between modules.
+
+**Interface:**
+
+```
+simple :
+    { msg : subMsg -> msg
+    , accessModel : model -> subModel
+    , updateModel : subModel -> model -> model
+    , init : ( subModel, Cmd subMsg )
+    , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
+    , view : subModel -> Html subMsg
+    , subscriptions : subModel -> Sub subMsg
+    }
+    -> Glue model subModel msg subMsg
+```
+-}
+simple :
+    { msg : subMsg -> msg
+    , accessModel : model -> subModel
+    , updateModel : subModel -> model -> model
+    , init : ( subModel, Cmd subMsg )
+    , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
+    , view : subModel -> Html subMsg
+    , subscriptions : subModel -> Sub subMsg
+    }
+    -> Glue model subModel msg subMsg
+simple { msg, accessModel, updateModel, init, update, view, subscriptions } =
+    Glue
+        { model = updateModel
+        , init = init |> map msg
+        , update =
+            \subMsg model ->
+                accessModel model
+                    |> update subMsg
+                    |> map msg
+        , view =
+            \model ->
+                accessModel model
+                    |> view
+                    |> Html.map msg
+        , subscriptions =
+            \model ->
+                accessModel model
+                    |> subscriptions
+                    |> Sub.map msg
+        }
+
+
+{-| Crate polymorphic [Glue](#Glue) mapping between modules.
+
+**Interface:**
+
+```
+poly :
+    { msg : subMsg -> msg
+    , accessModel : model -> subModel
+    , updateModel : subModel -> model -> model
+    , init : ( subModel, Cmd msg )
+    , update : subMsg -> subModel -> ( subModel, Cmd msg )
+    , view : subModel -> Html msg
+    , subscriptions : subModel -> Sub msg
+    }
+    -> Glue model subModel msg subMsg
+```
+-}
+poly :
+    { msg : subMsg -> msg
+    , accessModel : model -> subModel
+    , updateModel : subModel -> model -> model
+    , init : ( subModel, Cmd msg )
+    , update : subMsg -> subModel -> ( subModel, Cmd msg )
+    , view : subModel -> Html msg
+    , subscriptions : subModel -> Sub msg
+    }
+    -> Glue model subModel msg subMsg
+poly { msg, accessModel, updateModel, init, update, view, subscriptions } =
+    Glue
+        { model = updateModel
+        , init = init
+        , update =
+            \subMsg model ->
+                accessModel model
+                    |> update subMsg
+        , view =
+            \model ->
+                accessModel model
+                    |> view
+        , subscriptions =
+            \model ->
+                accessModel model
+                    |> subscriptions
+        }
+
+
 {-| Create [Glue](#Glue) mapigs between modules.
 child module can be generic TEA app or module that is already doing polymorfic maping to generic `msg` internaly.
 You can also use `Cmd` for sending data from bottom module to upper one if you want to observe child
 as a black box (similary you do in case of DOM events with `Html.Events`).
 
-**Interface**:
+**Interface:**
 
 ```
 glue :
@@ -56,8 +167,6 @@ glue :
     }
     -> Glue model subModel msg subMsg
 ```
-
-See [examples](https://github.com/turboMaCk/glue/tree/master/examples) for more informations.
 -}
 glue :
     { model : subModel -> model -> model
@@ -71,86 +180,11 @@ glue =
     Glue
 
 
-{-| Create [Glue](#Glue) mapigs between modules.
-child module can be generic TEA app or module that is already doing polymorfic maping to generic `msg` internaly.
-You can also use `Cmd` for sending data from bottom module to upper one if you want to observe child
-as a black box (similary you do in case of DOM events with `Html.Events`).
-
-**Interface**:
-
-    createglue :
-          { modelsetter = \subModel model -> { model | subModel = subModel }
-          , modelgetter = .subModel
-          , init =  ( subModel, Cmd subMsg )
-          , update = subMsg -> subModel -> ( subModel, Cmd msg )
-          , view = subModel -> Html subMsg
-          , subscriptions = subModel -> Sub subMsg
-          , liftmessage = subMsg -> msg
-          }
-        -> Glue model subModel msg subMsg
-
-See [examples](https://github.com/turboMaCk/glue/tree/master/examples) for more informations.
-
--}
-createglue :
-    { e
-        | init : ( subModel, Cmd subMsg )
-        , liftmessage : subMsg -> msg
-        , modelgetter : model -> subModel
-        , modelsetter : subModel -> model -> model
-        , subscriptions : subModel -> Sub subMsg
-        , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
-        , view : subModel -> Html subMsg
-    }
-    -> Glue model subModel msg subMsg
-createglue config =
-    glue <|
-        { model = config.modelsetter
-        , init = config.init |> map config.liftmessage
-        , update =
-            \subMsg model ->
-                config.modelgetter model
-                    |> config.update subMsg
-                    |> map config.liftmessage
-        , view = \model -> Html.map config.liftmessage <| config.view <| config.modelgetter model
-        , subscriptions = \model -> Sub.map config.liftmessage <| config.subscriptions <| config.modelgetter model
-        }
-
-
-{-| Spike -}
-bubbling :
-    { e
-        | init : ( subModel, Cmd msg )
-        , liftmessage : subMsg -> msg
-        , modelgetter : model -> subModel
-        , modelsetter : subModel -> model -> model
-        , subscriptions : subModel -> Sub msg
-        , update : subMsg -> subModel -> ( subModel, Cmd msg )
-        , view : subModel -> Html msg
-    }
-    -> Glue model subModel msg subMsg
-bubbling config =
-    glue <|
-        { model = config.modelsetter
-        , init = config.init
-        , update =
-            \subMsg model ->
-                config.modelgetter model
-                    |> config.update subMsg
-        , view = \model -> config.view <| config.modelgetter model
-        , subscriptions = \model -> config.subscriptions <| config.modelgetter model
-        }
-
-
 
 -- Basics
 
 
 {-| Initialize child module in parent.
-
-Init uses [applicative style](https://wiki.haskell.org/Applicative_functor) for `(subModel -> a, Cmd Msg)`
-similarly to [`Json.Decode.Extra.andMap`](http://package.elm-lang.org/packages/elm-community/json-extra/2.1.0/Json-Decode-Extra#andMap).
-The only diference is that `(subModel, Cmd msg)` is extracted from [`Glue`](#Glue) definition.
 
 ```
 type alias Model =
@@ -177,10 +211,6 @@ init (Glue { init }) ( fc, cmd ) =
 
 {-| Update submodule's state using it's `update` function.
 
-This uses [functor-like](https://en.wikipedia.org/wiki/Functor) approach to transform `(subModel, msg) -> (model, msg)`.
-Anyway rather then using low level function like `map` this transformation is constructed from `model` and `update`
-functions from [`Glue`](#Glue) for you under the hood.
-
 ```
 type Msg
     = CounterMsg Counter.Msg
@@ -206,9 +236,6 @@ update (Glue { update, model }) subMsg ( m, cmd ) =
 
 {-| Render submodule's view.
 
-This is in fact just proxy to `view` function from [`Glue`](#Glue). This function relies on [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map)
-and is efectively just wrapper around [functorish](https://en.wikipedia.org/wiki/Functor) operation.
-
 ```
 view : Model -> Html msg
 view model =
@@ -217,7 +244,6 @@ view model =
         , Glue.view counter model
         ]
 ```
-
 -}
 view : Glue model subModel msg subMsg -> model -> Html msg
 view (Glue { view }) =
@@ -226,14 +252,11 @@ view (Glue { view }) =
 
 {-| Subscribe to subscriptions defined in submodule.
 
-You can think about this as about mapping and merging over subscriptions.
-For mapping part `subscriptions` function from [`Glue`](#Glue) is used.
-
 ```
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\model -> Mouse.clicks Clicked)
-        |> Glue.subscriptions subModlue
+        |> Glue.subscriptions subModule
         |> Glue.subscriptions anotherNestedModule
 ```
 -}
@@ -242,14 +265,31 @@ subscriptions (Glue { subscriptions }) mainSubscriptions =
     \model -> Sub.batch [ mainSubscriptions model, subscriptions model ]
 
 
+{-| Subscribe to subscriptions when model is in some state.
+
+```
+subscriptions : Model -> Sub Msg
+subscriptions =
+    (\_ -> Mouse.clicks Clicked)
+        |> Glue.subscriptionsWhen .subModuleSubOn subModule
+```
+-}
+subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptionsWhen cond glue sub model =
+    if cond model then
+        subscriptions glue sub model
+    else
+        sub model
+
+
 
 -- Helpers
 
 
 {-| Tiny abstraction over [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map)
-packed in `(model, Cmd msg)` pair that helps you to reduce boilerplate while turning generic TEA app to [`Glue`](#Glue).
+packed in `(model, Cmd msg)` pair that helps you to reduce boilerplate while turning generic TEA app to [`Glue`](#Glue) using [`glue`](#glue) constructor.
 
-This function is generally usefull for turning update and init functions in `[Glue](#Glue)` definition.
+This function is generally usefull for turning update and init functions in [`Glue`](#glue) definition.
 
 ```
 type alias Model =
@@ -260,6 +300,7 @@ type alias Model =
 type Msg
     = CounterMsg Counter.Msg
 
+-- this works liske `simple` constructor
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.glue

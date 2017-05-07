@@ -1,4 +1,10 @@
-module Bubbling.Main exposing (main)
+module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions)
+
+{-| This is example of child to parent communication using Cmd bubbling.
+
+This Example works as demonstration of such a communication and do not really
+reflect real world use-case for this practice.
+-}
 
 import Html exposing (Html)
 
@@ -15,11 +21,13 @@ import Bubbling.Counter as Counter
 
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Glue.glue
-        { model = \subModel model -> { model | counter = subModel }
+    Glue.poly
+        { msg = CounterMsg
+        , accessModel = .counter
+        , updateModel = \subModel model -> { model | counter = subModel }
         , init = Counter.init Even
-        , update = \subMsg model -> Counter.update Even subMsg model.counter
-        , view = \model -> Counter.view CounterMsg model.counter
+        , update = Counter.update Even
+        , view = Counter.view CounterMsg
         , subscriptions = \_ -> Sub.none
         }
 
@@ -29,8 +37,9 @@ counter =
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+subscriptions =
+    (\_ -> Sub.none)
+        |> Glue.subscriptions counter
 
 
 main : Program Never Model Msg
@@ -39,9 +48,7 @@ main =
         { init = init
         , update = update
         , view = view
-        , subscriptions =
-            subscriptions
-                |> Glue.subscriptions counter
+        , subscriptions = subscriptions
         }
 
 
