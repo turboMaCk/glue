@@ -36,13 +36,7 @@ moves =
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\_ -> Mouse.clicks Clicked)
-        |> \sub model ->
-            if model.movesOn then
-                -- subscribe to moves
-                Glue.subscriptions moves sub model
-            else
-                -- without this even clicks are bypassed
-                sub model
+        |> Glue.subscriptionsWhen .movesOn moves
 
 
 main =

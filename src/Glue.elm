@@ -8,6 +8,7 @@ module Glue
         , update
         , view
         , subscriptions
+        , subscriptionsWhen
         , map
         )
 
@@ -28,7 +29,7 @@ and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#m
 
 # Basics
 
-@docs init, update, view, subscriptions
+@docs init, update, view, subscriptions, subscriptionsWhen
 
 # Helpers
 
@@ -255,13 +256,30 @@ view (Glue { view }) =
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\model -> Mouse.clicks Clicked)
-        |> Glue.subscriptions subModlue
+        |> Glue.subscriptions subModule
         |> Glue.subscriptions anotherNestedModule
 ```
 -}
 subscriptions : Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
 subscriptions (Glue { subscriptions }) mainSubscriptions =
     \model -> Sub.batch [ mainSubscriptions model, subscriptions model ]
+
+
+{-| Subscribe to subscriptions when model is in some state.
+
+```
+subscriptions : Model -> Sub Msg
+subscriptions =
+    (\_ -> Mouse.clicks Clicked)
+        |> Glue.subscriptionsWhen .subModuleSubOn subModule
+```
+-}
+subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptionsWhen cond glue sub model =
+    if cond model then
+        subscriptions glue sub model
+    else
+        sub model
 
 
 
