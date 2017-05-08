@@ -122,8 +122,7 @@ poly :
 ```
 -}
 poly :
-    { msg : subMsg -> msg
-    , accessModel : model -> subModel
+    { accessModel : model -> subModel
     , updateModel : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
@@ -131,7 +130,7 @@ poly :
     , subscriptions : subModel -> Sub msg
     }
     -> Glue model subModel msg subMsg
-poly { msg, accessModel, updateModel, init, update, view, subscriptions } =
+poly { accessModel, updateModel, init, update, view, subscriptions } =
     Glue
         { model = updateModel
         , init = init

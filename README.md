@@ -38,6 +38,7 @@ The goals and features of this package are:
 - Reduce [indirection](https://en.wikipedia.org/wiki/Indirection) in glueing between parent and child module.
 - Define glueing logic on consumer level.
 - Enforce common interface in `init` `update` `subscribe` and `view`.
+- *You should read whole README.md anyway.*
 
 ## Downsides
 
@@ -170,7 +171,7 @@ Other functions within the `Glue` package use the `Glue.Glue` type as proxy to a
 This is how we can construct the `Glue` type for [counter example](https://guide.elm-lang.org/architecture/user_input/buttons.html):
 
 ```elm
-import Glue
+import Glue exposing (Glue)
 
 -- Counter module
 import Counter
@@ -179,8 +180,8 @@ counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
-        , accessModel = .counter
-        , updateModel = \subModel model -> { model | counter = subModel }
+        , accessModel = .counterModel
+        , updateModel = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view
@@ -205,7 +206,7 @@ And this is our `init`, `update` and `view` for this example:
 
 ```elm
 
-init : ( Model, Cmd msg )
+init : ( Model, Cmd Msg )
 init =
     ( Model, Cmd.none )
         |> Glue.init counter
@@ -227,18 +228,16 @@ As you can see we're using simple `Glue.init`, `Glue.update` and `Glue.view` in 
 ### Wrap Polymorphic Module
 
 A "polymorphic module" is what I call TEA modules that have to be integrated into some other app.
-Such a module has usually API like `api : Config msg -> Model -> ( Model, Cmd msg )`. Usually these types of modules are also performing
-[child to parent communication](#action-bubbling) but let's leave this detail for it's own section.
-Basically these modules are using `Cmd.map`, `Html.map`, and `Sub.map` internally so you don't need to map these types in parent component or `Glue` type definition.
-Let's make `Counter.elm` polymorphic so it's clear what this mean.
+Such a module has usually API like `update : Config msg -> Model -> ( Model, Cmd msg )`.
+Usually these types of modules are also performing [child to parent communication](#action-bubbling)
+but let's leave this detail for now.
+Basically these modules are using `Cmd.map`, `Html.map`, and / or `Sub.map` internally
+so you don't need to map these types in parent module or `Glue` type definition.
 
-**Note:**
-*This example is quite artificial demostration of what is possible to do with `Glue`.
-In real world it probably doesn't make sense to use similar approach
-for something as simple as counter and text which are interested in same action*
-
-To make `Counter` "polymorphic" we need add one extra argument to counter's `view` function
-and a small change to the type annotations of `init` and `update`:
+To make `Counter` "polymorphic" we can start by adding one extra argument to its `view` function
+so it will be doing `Html.map` internally. Then we need to change type annotation of `init` and `update`
+to generic `Cmd msg`. Since both function are internally using just `Cmd.none`
+we don't need to change anything else but that.
 
 ```elm
 init : ( Model, Cmd msg )
@@ -265,37 +264,28 @@ into that record.*
 *Usually also `update` and `init` api changes and should take `Config msg` or `(Msg -> msg)` in this case.
 It's just happened that `Counter` example uses only `Cmd.none` in both `init` and `update`.*
 
-Now we need to change our `Glue` definition in the parent module to reflect the new API of counter:
+Now we need to change `Glue` type definition in the parent module to reflect the new API of `Counter`:
 
 ```elm
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Glue.glue
-        { model = \subModel model -> { model | counterModel = subModel }
-        , init = Counter.init |> Glue.map CounterMsg
-        , update =
-            \subMsg model ->
-                model.counterModel
-                    |> Counter.update subMsg
-                    |> Glue.map CounterMsg
-        , view = \model -> Counter.view CounterMsg model.counterModel
+    Glue.poly
+        { accessModel = .counterModel
+        , updateModel = \subModel model -> { model | counterModel = subModel }
+        , init = Counter.init
+        , update = Counter.update
+        , view = Counter.view CounterMsg
         , subscriptions = \_ -> Sub.none
         }
 ```
 
-As you can see we've switched from `Glue.simple` constructor to `Glue.glue` one.
-`Glue.glue` is low lever constructor of `Glue` type.
-It's useful in cases where `init`, `update`, `view` and `subscribe` returns different type of `Cmd`
-in `( Model, Cmd a )` Tuple. Generally it's good to avoid similar APIs.
-[Later](#action-bubbling) we will have a look on other standard constructor - `Glue.poly`.
-
-Change in `Glue` definition is all that is required when a child module's API changes.
-Since the `Glue` type holds all mappings in one place, there is no need for changes
-in the parent's `init`, `update`, or `view` functions.
+As you can see we've switch from `Glue.simple` constructor to `Glue.poly` one.
+This means we no longer need to supply `msg` since `Glue.poly` doesn't need it.
+Instead we pass `CounterMsg` to `view` part as `Counter.view CounterMsg`.
 
 ### Child Parent Communication
 
-If your module is [polymorphic](#wrap-polymorphic-module) it can easily send `Cmd` to its parent.
+If your module is [polymorphic](#wrap-polymorphic-module) it can easily send `Cmd`s to its parent.
 Please check [cmd-extra](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/latest) package
 which helps you construct `Cmd Msg` from `Msg`.
 
@@ -332,9 +322,9 @@ As an example, we can use the (polymorphic) `Counter.elm` again. Let's say we wa
 
 **Note:**
 *This Example works as demonstration of such a communication and do not really
-reflect real world use-case of this practice. Clearly if parent component is interested
-in model of sub component (Even/Odd is really tightly related to child model)
-it should really be part of its Model and passed to child rather than other way around.*
+reflect real world use-case of this practice. Clearly if parent module is interested
+in whole model of child module (Even/Odd is really tightly related to child's model)
+it should really be part of its Model and passed to child's view as argument rather than other way around.*
 
 For this we need to define a helper function in `Counter.elm`:
 
@@ -384,11 +374,12 @@ update notify msg model =
 
 Now both `init` and `update` should send `Cmd` when `Model` is an even number.
 This is a breaking change to `Counter`'s API so we need to change its integration as well.
-Since we want to actually use this message and do something with it let me first update the parent's `Msg` and `Model`:
+Since we want to actually use this message and do something with it let me first update
+the parent's `Msg` and `Model`:
 
 ```elm
 type alias Model =
-    { even : Bool
+    { isEven : Bool
     , counter : Counter.Model
     }
 
@@ -397,7 +388,7 @@ type Msg
     | Even
 ```
 
-Because we've changed `Model` (added `even : Bool`) we should change `init` and `view` like:
+Because we've changed `Model` (added `isEven : Bool`) we should change `init` and `view` like:
 
 ```elm
 init : ( Model, Cmd Msg )
@@ -410,69 +401,53 @@ view model =
     Html.div []
         [ Glue.view counter model
         , Html.text <|
-            if model.even then
+            if model.isEven then
                 "is even"
             else
                 "is odd"
         ]
 ```
 
-This completes the changes to `Model`. Now we need to change update `update` function so it can handle the `Even` message.
+This completes the changes to `Model`. Now we need to change update `update` function
+so it can handle the `Even` message.
 
 ```elm
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
-            ( { model | even = False }, Cmd.none )
+            ( { model | isEven = False }, Cmd.none )
                 |> Glue.update counter counterMsg
 
         Even ->
-            ( { model | even = True }, Cmd.none )
+            ( { model | isEven = True }, Cmd.none )
 ```
 
 As you can see we're setting `even` to `False` on every `CounterMsg`.
 This is because `Counter` is just emitting `Cmd` when its `Model` is Even.
+*Yes this is just example of what is possible.*
 
-To handle the `Even` action itself. This simply sets `even = True` in the model.
+To handle the `Even` action itself. This simply sets `isEven = True` in the model.
 
-*This is to show you why you might need to update both the parent's and child's `Model` on a single `Msg` (`CounterMsg` in this case), and how to do it.
-Anyway this is just really simple example. In real world you probably don't want to use `Cmd` for things as like this.*
-
-Since the parent is ready to handle actions from `Counter` our last step is simply to update the `Glue` construction for the new APIs:
-
-Since now API of `Counter` is consistent (`init`, `update` and `view` works with `msg` rather then `Counter.Msg`)
-we can take advantage of `Glue.poly` as follow:
+Since the parent is ready to handle actions from `Counter` our last step is simply
+to update the `Glue` construction for the new APIs:
 
 ```elm
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.poly
-        { msg = CounterMsg
-        , accessModel = .counter
-        , updateModel = \subModel model -> { model | counter = subModel }
+        { accessModel = .counterModel
+        , updateModel = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init Even
         , update = Counter.update Even
-        , view = Counter.view
+        , view = Counter.view CounterMsg
         , subscriptions = \_ -> Sub.none
         }
 ```
 
 There we simply pass the parent's `Even` constructor to the `update` and `init` functions of the child.
-As you can see this definition is same as `Glue.simple` we have started with!
-The only difference is that we're using `Glue.poly` and passing `Even` constructor to `init`
 
-See this [complete example](https://github.com/turboMaCk/glue/tree/master/examples/bubbling) to learn more.
-
-## Re-evaluating and Future Work
-
-This package is still in a really early stage of development and needs to be tested in the field.
-Personally I still need to sort out a few things.
-For instance is it really a good idea to include `view` handling. Or if its API is really right.
-First of all `view` is not really related to `(Model, Cmd msg)` pair itself.
-Also view is API are usually thing that varies most between modules. On the other hand it's nice
-to refer to modules view same way you refer to it's update.
-Anyway since this package is still in early experimental stage I'll leave this question open.
+See this [complete example](https://github.com/turboMaCk/glue/tree/master/examples/Bubbling) to learn more.
 
 ## License
 
