@@ -46,7 +46,7 @@ There are certain down-sides in using Glue.
 - I'm still thinking about how to work with views which takes multiple arguments where some are neither constant nor
 part of parent's model. For instance you can use routing and have `Route` stored in very top model.
 Then you can easily pass this route to child's view (since you can read it from parent's model).
-However if that child module has another nested module wich view takes `Route` you have a problem.
+However if that child module has another nested module whose view takes `Route` you have a problem.
 It doesn't make sense to store route in every model in chain but `view` part of `Glue` has `model -> Html msg` type signature.
 This means you can't chain this argument without storing it to every model in chain.
 There are workaround for this but it would be nice to have build-in solution for this.
