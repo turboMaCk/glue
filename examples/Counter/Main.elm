@@ -4,7 +4,7 @@ module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 This example is quite artificial demostration of what is possible to do with `Glue`.
 In real world it probably doesn't make sense to use similar approach
-for something as simple as counter and text.
+for something as simple as counter and text which are interested in same action.
 -}
 
 import Html exposing (Html)

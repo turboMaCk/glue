@@ -15,7 +15,8 @@ type alias Model =
 init : msg -> ( Model, Cmd msg )
 init msg =
     let
-        model = 0
+        model =
+            0
     in
         ( model, notifyEven msg model )
 
@@ -30,8 +31,8 @@ type Msg
 
 
 isEven : Int -> Bool
-isEven =
-    (==) 0 << (Basics.flip (%)) 2
+isEven num =
+    num % 2 == 0
 
 
 notifyEven : msg -> Model -> Cmd msg
