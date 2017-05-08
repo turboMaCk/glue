@@ -39,9 +39,9 @@ The goals and features of this package are:
 - Define glueing logic on consumer level.
 - Enforce common interface in `init` `update` `subscribe` and `view`.
 
-## Downsides of Glue
+## Downsides
 
-There are certain down-sides in using Glue.
+There are certain down-sides to choosing glue over manual usage of `Cmd.map`, `Html.map` and `Sub.map`.
 
 - I'm still thinking about how to work with views which takes multiple arguments where some are neither constant nor
 part of parent's model. For instance you can use routing and have `Route` stored in very top model.

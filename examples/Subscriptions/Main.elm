@@ -1,5 +1,9 @@
 module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
 
+{-| This is example of slightly bit more complex management of subscriptions
+between parent and child.
+-}
+
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)

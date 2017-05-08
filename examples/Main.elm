@@ -2,11 +2,11 @@ module Main exposing (..)
 
 {-| This module glues all other examples into one Html.Program
 
-This is used mostly for purposes of other examples. If this file compiles
+This is used mostly for testing purposes. If this file compiles
 than all examples are up to data with recent API.
 
 It's really discutable if something like this is usefull in practice.
-Generally I would say it's not. This is really like rendering multiple TEA
+Generally I would say it's not in most cases. This is really like rendering multiple TEA
 applications into single html using multiple `embed`s.
 -}
 
