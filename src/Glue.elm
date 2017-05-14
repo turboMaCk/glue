@@ -42,7 +42,7 @@ import Html exposing (Html)
 
 {-| `Glue` defines interface mapings between parent and child module.
 
-You can create `Glue` with the [`glue`](#glue) function constructor.
+You can create `Glue` with the [`simple`](#simple), [`poly`](#poly) or [`glue`](#glue) function constructor in case of non-standard APIs.
 Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `[Submodule].Msg`.
 -}
 type Glue model subModel msg subMsg
@@ -55,7 +55,10 @@ type Glue model subModel msg subMsg
         }
 
 
-{-| Create simple [Glue](#Glue) mappig between modules.
+{-| Simple [`Glue`](#Glue) constructor.
+
+Generally useful for composing independent TEA modules together.
+If your module's API is polymofphic use [`poly`](#poly) constructor instead.
 
 **Interface:**
 
@@ -104,14 +107,15 @@ simple { msg, accessModel, updateModel, init, update, view, subscriptions } =
         }
 
 
-{-| Crate polymorphic [Glue](#Glue) mapping between modules.
+{-| Polymorphic [`Glue`](#Glue) constructor.
+
+Usefull when module's api has generic `msg` type. Module can also perfrom action bubbling to parent.
 
 **Interface:**
 
 ```
 poly :
-    { msg : subMsg -> msg
-    , accessModel : model -> subModel
+    { accessModel : model -> subModel
     , updateModel : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
@@ -149,10 +153,12 @@ poly { accessModel, updateModel, init, update, view, subscriptions } =
         }
 
 
-{-| Create [Glue](#Glue) mapigs between modules.
-child module can be generic TEA app or module that is already doing polymorfic maping to generic `msg` internaly.
-You can also use `Cmd` for sending data from bottom module to upper one if you want to observe child
-as a black box (similary you do in case of DOM events with `Html.Events`).
+{-| Low level [Glue](#Glue) constructor.
+
+Useful when you can't use either [`simple`](#simple) or [`poly`](#poly).
+This can be caused by nonstandard API where one of the functions uses generic `msg` and other `SubModule.Msg`.
+
+*Always use this constructor as your last option for constructing [`Glue`](#Glue).*
 
 **Interface:**
 
