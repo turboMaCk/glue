@@ -17,9 +17,9 @@ Feedback and contributions to both code and documentation are very welcome.
 ## Important Note!
 
 This package is not necessary designed for either code splitting or reuse but rather for **state separation**.
-State separation might and might not be important for reusing certain parts of application.
+State separation might or might not be important for reusing certain parts of application.
 Not everything is necessary stateful. For instance many UI parts can be express just by using `view` function
-to which you pass `msg` constructors (`view : msg -> Model -> Html msg` for instance) and let consumer to manage it's state.
+to which you pass `msg` constructors (`view : msg -> Model -> Html msg` for instance) and let consumer to manage its state.
 On the other hand some things like larger parts of applications or parts containing a lot of self-maintainable stateful logic
 can benefit from state isolation since it reduces state handling imposed on consumer of that module.
 Generally it's good rule to always choose simpler approach (And using stateless abstraction is usually simpler) -
@@ -38,7 +38,7 @@ The goals and features of this package are:
 - Reduce [indirection](https://en.wikipedia.org/wiki/Indirection) in glueing between parent and child module.
 - Define glueing logic on consumer level.
 - Enforce common interface in `init` `update` `subscribe` and `view`.
-- *You should read whole README.md anyway.*
+- *You should read whole README anyway.*
 
 ## Downsides
 
@@ -50,7 +50,7 @@ Then you can easily pass this route to child's view (since you can read it from 
 However if that child module has another nested module whose view takes `Route` you have a problem.
 It doesn't make sense to store route in every model in chain but `view` part of `Glue` has `model -> Html msg` type signature.
 This means you can't chain this argument without storing it to every model in chain.
-There are workaround for this but it would be nice to have build-in solution for this.
+There are workarounds but it would be nice to have build-in solution for this.
 - In 2.x.x it would be nice to have function `updateWith : Glue model subModel msg subMsg -> (subModel -> subModel) -> ( model, Cmd msg ) -> ( model, Cmd msg )`.
 Unfortunetelly this will require breaking change in `Glue` and it's `glue` constructor. This idea is not verified and tested yet.
 
@@ -84,17 +84,16 @@ but in some cases these functions and `Model` and `Msg` thend to grow pretty qui
 There are [many ways](https://www.reddit.com/r/elm/comments/5jd2xn/how_to_structure_elm_with_multiple_models/dbkpgbd/)
 you can start. In particular rest of this document will focus just on [separation of concerns](https://en.wikipedia.org/wiki/Separation_of_concerns).
 This technique is useful for isolating parts that really don't need know too much about each other. It helps to reduce number of things particular module is touching and
-limits number of things programmer has to think about and can manage while adding or changing behaviour of such isolated part of system.
+limit number of things programmer has to reason about while adding or changing behaviour of such isolated part of system.
 In tea this is especially touching `Msg` type and `update` function.
-Technique described below you can be used for splitting `update` logic and `Msg` type so some modules are partially or fully responsible for updating just their own part of overall application state.
 
 **It's important to understand that `init` `update` `view` and `subscriptions` are all isolated functions connected via `Html.program`.
 In pure functional programming we're "never" really managing state ourselves but are rather composing functions that takes state as a data and produce new version of it (`update` function in TEA).**
 
 Now lets have a look on how we can use [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#map),
 [`Sub.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Sub#map)
-and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) for separation in Elm app.
-We can use them for nesting `init`, `update`, `subscriptions` and `view`.
+and [`Html.map`](http://package.elm-lang.org/packages/debois/elm-parts/latest) for separation in TEA based app.
+We will nest `init`, `update`, `subscriptions` and `view` one into another and map them from child to parents types.
 Higher level module is then using these units to manage just a subset of its overall state (`Model`).
 Here is how `Model` and `Msg` types of a parent application might look like:
 
