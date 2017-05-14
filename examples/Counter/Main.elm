@@ -24,8 +24,8 @@ counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
-        , accessModel = .counter
-        , updateModel = \subModel model -> { model | counter = subModel }
+        , get = .counter
+        , set = \subModel model -> { model | counter = subModel }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view

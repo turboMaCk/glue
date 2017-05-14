@@ -24,8 +24,8 @@ import Bubbling.Counter as Counter
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.poly
-        { accessModel = .counter
-        , updateModel = \subModel model -> { model | counter = subModel }
+        { get = .counter
+        , set = \subModel model -> { model | counter = subModel }
         , init = Counter.init Even
         , update = Counter.update Even
         , view = Counter.view CounterMsg

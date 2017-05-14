@@ -24,8 +24,8 @@ moves : Glue Model Moves.Model Msg Moves.Msg
 moves =
     Glue.simple
         { msg = MovesMsg
-        , accessModel = .moves
-        , updateModel = \subModel model -> { model | moves = subModel }
+        , get = .moves
+        , set = \subModel model -> { model | moves = subModel }
         , init = Moves.init
         , update = Moves.update
         , view = Moves.view
