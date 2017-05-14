@@ -9183,10 +9183,10 @@ var _user$project$Glue$Glue = function (a) {
 var _user$project$Glue$simple = function (_p17) {
 	var _p18 = _p17;
 	var _p20 = _p18.msg;
-	var _p19 = _p18.accessModel;
+	var _p19 = _p18.get;
 	return _user$project$Glue$Glue(
 		{
-			model: _p18.updateModel,
+			model: _p18.set,
 			init: A2(_user$project$Glue$map, _p20, _p18.init),
 			update: F2(
 				function (subMsg, model) {
@@ -9216,10 +9216,10 @@ var _user$project$Glue$simple = function (_p17) {
 };
 var _user$project$Glue$poly = function (_p21) {
 	var _p22 = _p21;
-	var _p23 = _p22.accessModel;
+	var _p23 = _p22.get;
 	return _user$project$Glue$Glue(
 		{
-			model: _p22.updateModel,
+			model: _p22.set,
 			init: _p22.init,
 			update: F2(
 				function (subMsg, model) {
@@ -9249,10 +9249,10 @@ var _user$project$Bubbling_Main$CounterMsg = function (a) {
 };
 var _user$project$Bubbling_Main$counter = _user$project$Glue$poly(
 	{
-		accessModel: function (_) {
+		get: function (_) {
 			return _.counter;
 		},
-		updateModel: F2(
+		set: F2(
 			function (subModel, model) {
 				return _elm_lang$core$Native_Utils.update(
 					model,
@@ -9386,10 +9386,10 @@ var _user$project$Counter_Main$CounterMsg = function (a) {
 var _user$project$Counter_Main$counter = _user$project$Glue$simple(
 	{
 		msg: _user$project$Counter_Main$CounterMsg,
-		accessModel: function (_) {
+		get: function (_) {
 			return _.counter;
 		},
-		updateModel: F2(
+		set: F2(
 			function (subModel, model) {
 				return _elm_lang$core$Native_Utils.update(
 					model,
@@ -9483,10 +9483,10 @@ var _user$project$Subscriptions_Main$MovesMsg = function (a) {
 var _user$project$Subscriptions_Main$moves = _user$project$Glue$simple(
 	{
 		msg: _user$project$Subscriptions_Main$MovesMsg,
-		accessModel: function (_) {
+		get: function (_) {
 			return _.moves;
 		},
-		updateModel: F2(
+		set: F2(
 			function (subModel, model) {
 				return _elm_lang$core$Native_Utils.update(
 					model,
@@ -9625,10 +9625,10 @@ var _user$project$Main$SubscriptionsMsg = function (a) {
 var _user$project$Main$subscriptions = _user$project$Glue$simple(
 	{
 		msg: _user$project$Main$SubscriptionsMsg,
-		accessModel: function (_) {
+		get: function (_) {
 			return _.subscriptionsModel;
 		},
-		updateModel: F2(
+		set: F2(
 			function (sm, m) {
 				return _elm_lang$core$Native_Utils.update(
 					m,
@@ -9645,10 +9645,10 @@ var _user$project$Main$BubblingMsg = function (a) {
 var _user$project$Main$bubbling = _user$project$Glue$simple(
 	{
 		msg: _user$project$Main$BubblingMsg,
-		accessModel: function (_) {
+		get: function (_) {
 			return _.bubblingModel;
 		},
-		updateModel: F2(
+		set: F2(
 			function (sm, m) {
 				return _elm_lang$core$Native_Utils.update(
 					m,
@@ -9665,10 +9665,10 @@ var _user$project$Main$CounterMsg = function (a) {
 var _user$project$Main$counter = _user$project$Glue$simple(
 	{
 		msg: _user$project$Main$CounterMsg,
-		accessModel: function (_) {
+		get: function (_) {
 			return _.counterModel;
 		},
-		updateModel: F2(
+		set: F2(
 			function (sm, m) {
 				return _elm_lang$core$Native_Utils.update(
 					m,
