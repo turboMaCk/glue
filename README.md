@@ -179,8 +179,8 @@ counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
-        , accessModel = .counterModel
-        , updateModel = \subModel model -> { model | counterModel = subModel }
+        , get = .counterModel
+        , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view
@@ -264,8 +264,8 @@ Now we need to change `Glue` type definition in parent module to reflect the new
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.poly
-        { accessModel = .counterModel
-        , updateModel = \subModel model -> { model | counterModel = subModel }
+        { get = .counterModel
+        , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view CounterMsg
@@ -430,8 +430,8 @@ to update the `Glue` construction for the new APIs:
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.poly
-        { accessModel = .counterModel
-        , updateModel = \subModel model -> { model | counterModel = subModel }
+        { get = .counterModel
+        , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init Even
         , update = Counter.update Even
         , view = Counter.view CounterMsg
