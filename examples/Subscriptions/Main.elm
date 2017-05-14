@@ -1,5 +1,9 @@
 module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
 
+{-| This is example of slightly bit more complex management of subscriptions
+between parent and child.
+-}
+
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)
@@ -20,8 +24,8 @@ moves : Glue Model Moves.Model Msg Moves.Msg
 moves =
     Glue.simple
         { msg = MovesMsg
-        , accessModel = .moves
-        , updateModel = \subModel model -> { model | moves = subModel }
+        , get = .moves
+        , set = \subModel model -> { model | moves = subModel }
         , init = Moves.init
         , update = Moves.update
         , view = Moves.view

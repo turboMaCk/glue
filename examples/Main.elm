@@ -2,11 +2,11 @@ module Main exposing (..)
 
 {-| This module glues all other examples into one Html.Program
 
-This is used mostly for purposes of other examples. If this file compiles
+This is used mostly for testing purposes. If this file compiles
 than all examples are up to data with recent API.
 
 It's really discutable if something like this is usefull in practice.
-Generally I would say it's not. This is really like rendering multiple TEA
+Generally I would say it's not in most cases. This is really like rendering multiple TEA
 applications into single html using multiple `embed`s.
 -}
 
@@ -26,8 +26,8 @@ counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
-        , accessModel = .counterModel
-        , updateModel = \sm m -> { m | counterModel = sm }
+        , get = .counterModel
+        , set = \sm m -> { m | counterModel = sm }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view
@@ -39,8 +39,8 @@ bubbling : Glue Model Bubbling.Model Msg Bubbling.Msg
 bubbling =
     Glue.simple
         { msg = BubblingMsg
-        , accessModel = .bubblingModel
-        , updateModel = \sm m -> { m | bubblingModel = sm }
+        , get = .bubblingModel
+        , set = \sm m -> { m | bubblingModel = sm }
         , init = Bubbling.init
         , update = Bubbling.update
         , view = Bubbling.view
@@ -52,8 +52,8 @@ subscriptions : Glue Model Subscriptions.Model Msg Subscriptions.Msg
 subscriptions =
     Glue.simple
         { msg = SubscriptionsMsg
-        , accessModel = .subscriptionsModel
-        , updateModel = \sm m -> { m | subscriptionsModel = sm }
+        , get = .subscriptionsModel
+        , set = \sm m -> { m | subscriptionsModel = sm }
         , init = Subscriptions.init
         , update = Subscriptions.update
         , view = Subscriptions.view

@@ -2,9 +2,9 @@ module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
 
 {-| This show how you can glue really simple statefull submodule.
 
-This example is quite artificial in order to keep things simple.
+This example is quite artificial demostration of what is possible to do with `Glue`.
 In real world it probably doesn't make sense to use similar approach
-for something as simple as this application.
+for something as simple as counter and text which are interested in same action.
 -}
 
 import Html exposing (Html)
@@ -24,8 +24,8 @@ counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
-        , accessModel = .counter
-        , updateModel = \subModel model -> { model | counter = subModel }
+        , get = .counter
+        , set = \subModel model -> { model | counter = subModel }
         , init = Counter.init
         , update = Counter.update
         , view = Counter.view
