@@ -14,6 +14,8 @@ but uses a different approach (no better or worse) for composing isolated pieces
 
 Feedback and contributions to both code and documentation are very welcome.
 
+[See demo](https://turbomack.github.io/glue/)
+
 ## Important Note!
 
 This package is not necessary designed for either code splitting or reuse but rather for **state separation**.
