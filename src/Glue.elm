@@ -37,8 +37,6 @@ and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#m
 
 -}
 
-import Html exposing (Html)
-
 
 {-| `Glue` defines interface mapings between parent and child module.
 
@@ -47,10 +45,10 @@ Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `
 -}
 type Glue model subModel msg subMsg
     = Glue
-        { model : subModel -> model -> model
+        { get : model -> subModel
+        , set : subModel -> model -> model
         , init : ( subModel, Cmd msg )
         , update : subMsg -> model -> ( subModel, Cmd msg )
-        , view : model -> Html msg
         , subscriptions : model -> Sub msg
         }
 
@@ -69,7 +67,6 @@ simple :
     , set : subModel -> model -> model
     , init : ( subModel, Cmd subMsg )
     , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
-    , view : subModel -> Html subMsg
     , subscriptions : subModel -> Sub subMsg
     }
     -> Glue model subModel msg subMsg
@@ -81,24 +78,19 @@ simple :
     , set : subModel -> model -> model
     , init : ( subModel, Cmd subMsg )
     , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
-    , view : subModel -> Html subMsg
     , subscriptions : subModel -> Sub subMsg
     }
     -> Glue model subModel msg subMsg
-simple { msg, get, set, init, update, view, subscriptions } =
+simple { msg, get, set, init, update, subscriptions } =
     Glue
-        { model = set
+        { get = get
+        , set = set
         , init = init |> map msg
         , update =
             \subMsg model ->
                 get model
                     |> update subMsg
                     |> map msg
-        , view =
-            \model ->
-                get model
-                    |> view
-                    |> Html.map msg
         , subscriptions =
             \model ->
                 get model
@@ -119,7 +111,6 @@ poly :
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
-    , view : subModel -> Html msg
     , subscriptions : subModel -> Sub msg
     }
     -> Glue model subModel msg subMsg
@@ -130,22 +121,18 @@ poly :
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
-    , view : subModel -> Html msg
     , subscriptions : subModel -> Sub msg
     }
     -> Glue model subModel msg subMsg
-poly { get, set, init, update, view, subscriptions } =
+poly { get, set, init, update, subscriptions } =
     Glue
-        { model = set
+        { get = get
+        , set = set
         , init = init
         , update =
             \subMsg model ->
                 get model
                     |> update subMsg
-        , view =
-            \model ->
-                get model
-                    |> view
         , subscriptions =
             \model ->
                 get model
@@ -164,20 +151,20 @@ This can be caused by nonstandard API where one of the functions uses generic `m
 
 ```
 glue :
-    { model : subModel -> model -> model
+    { get = model -> subModel
+    , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
-    , view : model -> Html msg
     , subscriptions : model -> Sub msg
     }
     -> Glue model subModel msg subMsg
 ```
 -}
 glue :
-    { model : subModel -> model -> model
+    { get : model -> subModel
+    , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
-    , view : model -> Html msg
     , subscriptions : model -> Sub msg
     }
     -> Glue model subModel msg subMsg
@@ -231,12 +218,12 @@ update msg model =
 
 -}
 update : Glue model subModel msg subMsg -> subMsg -> ( model, Cmd msg ) -> ( model, Cmd msg )
-update (Glue { update, model }) subMsg ( m, cmd ) =
+update (Glue { update, set }) subMsg ( m, cmd ) =
     let
         ( subModel, subCmd ) =
             update subMsg m
     in
-        ( model subModel m, Cmd.batch [ subCmd, cmd ] )
+        ( set subModel m, Cmd.batch [ subCmd, cmd ] )
 
 
 {-| Render submodule's view.
@@ -250,9 +237,12 @@ view model =
         ]
 ```
 -}
-view : Glue model subModel msg subMsg -> model -> Html msg
-view (Glue { view }) =
-    view
+
+
+
+-- view : Glue model subModel msg subMsg -> model -> Html msg
+-- view (Glue { view }) =
+-- view
 
 
 {-| Subscribe to subscriptions defined in submodule.
