@@ -46,7 +46,7 @@ You can create `Glue` with the [`simple`](#simple), [`poly`](#poly) or [`glue`](
 Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg`, `[Submodule].Msg` and `a`.
 
 - `model` is `Model` of parent
-- `subModel` is `Module` of child
+- `subModel` is `Model` of child
 - `msg` is `Msg` of parent
 - `subMsg` is `Msg` of child
 - `a` is type of `Msg` child's views return in `Html a`. Usually it's either `msg` or `subMsg`.
