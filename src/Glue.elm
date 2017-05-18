@@ -37,15 +37,17 @@ and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#m
 
 -}
 
+import Html exposing (Html)
 
 {-| `Glue` defines interface mapings between parent and child module.
 
 You can create `Glue` with the [`simple`](#simple), [`poly`](#poly) or [`glue`](#glue) function constructor in case of non-standard APIs.
 Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `[Submodule].Msg`.
 -}
-type Glue model subModel msg subMsg
+type Glue model subModel msg subMsg a
     = Glue
-        { get : model -> subModel
+        { msg : a -> msg
+        , get : model -> subModel
         , set : subModel -> model -> model
         , init : ( subModel, Cmd msg )
         , update : subMsg -> model -> ( subModel, Cmd msg )
@@ -80,10 +82,11 @@ simple :
     , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
     , subscriptions : subModel -> Sub subMsg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg subMsg
 simple { msg, get, set, init, update, subscriptions } =
     Glue
-        { get = get
+        { msg = msg
+        , get = get
         , set = set
         , init = init |> map msg
         , update =
@@ -123,10 +126,11 @@ poly :
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
     , subscriptions : subModel -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg msg
 poly { get, set, init, update, subscriptions } =
     Glue
-        { get = get
+        { msg = identity
+        , get = get
         , set = set
         , init = init
         , update =
@@ -151,7 +155,8 @@ This can be caused by nonstandard API where one of the functions uses generic `m
 
 ```
 glue :
-    { get = model -> subModel
+    { msg : subMsg -> msg
+    , get : model -> subModel
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
@@ -161,13 +166,14 @@ glue :
 ```
 -}
 glue :
-    { get : model -> subModel
+    { msg : a -> msg
+    , get : model -> subModel
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
     , subscriptions : model -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg a
 glue =
     Glue
 
@@ -192,7 +198,7 @@ init =
         |> Glue.init secondCounter
 ```
 -}
-init : Glue model subModel msg subMsg -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
+init : Glue model subModel msg subMsg a -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
 init (Glue { init }) ( fc, cmd ) =
     let
         ( subModel, subCmd ) =
@@ -217,7 +223,7 @@ update msg model =
 ```
 
 -}
-update : Glue model subModel msg subMsg -> subMsg -> ( model, Cmd msg ) -> ( model, Cmd msg )
+update : Glue model subModel msg subMsg a -> subMsg -> ( model, Cmd msg ) -> ( model, Cmd msg )
 update (Glue { update, set }) subMsg ( m, cmd ) =
     let
         ( subModel, subCmd ) =
@@ -233,13 +239,13 @@ view : Model -> Html msg
 view model =
     Html.div []
         [ Html.text model.message
-        , Glue.view counter (Html.map CounterMsg << Counter.view) model
+        , Glue.view counter Counter.view model
         ]
 ```
 -}
-view : Glue model subModel msg subMsg -> (subModel -> a) -> model -> a
-view (Glue { get }) view =
-    view << get
+view : Glue model subModel msg subMsg a -> (subModel -> Html a) -> model -> Html msg
+view (Glue { msg, get }) view model =
+    Html.map msg <| view <| get model
 
 
 {-| Subscribe to subscriptions defined in submodule.
@@ -252,7 +258,7 @@ subscriptions =
         |> Glue.subscriptions anotherNestedModule
 ```
 -}
-subscriptions : Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptions : Glue model subModel msg subMsg a -> (model -> Sub msg) -> (model -> Sub msg)
 subscriptions (Glue { subscriptions }) mainSubscriptions =
     \model -> Sub.batch [ mainSubscriptions model, subscriptions model ]
 
@@ -266,7 +272,7 @@ subscriptions =
         |> Glue.subscriptionsWhen .subModuleSubOn subModule
 ```
 -}
-subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg a -> (model -> Sub msg) -> (model -> Sub msg)
 subscriptionsWhen cond glue sub model =
     if cond model then
         subscriptions glue sub model
