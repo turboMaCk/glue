@@ -39,10 +39,17 @@ and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#m
 
 import Html exposing (Html)
 
+
 {-| `Glue` defines interface mapings between parent and child module.
 
 You can create `Glue` with the [`simple`](#simple), [`poly`](#poly) or [`glue`](#glue) function constructor in case of non-standard APIs.
-Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg` and `[Submodule].Msg`.
+Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg`, `[Submodule].Msg` and `a`.
+
+- `model` is `Model` of parent
+- `subModel` is `Module` of child
+- `msg` is `Msg` of parent
+- `subMsg` is `Msg` of child
+- `a` is type of `Msg` child's views return in `Html a`. Usually it's either `msg` or `subMsg`.
 -}
 type Glue model subModel msg subMsg a
     = Glue
