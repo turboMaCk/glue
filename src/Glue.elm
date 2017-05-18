@@ -233,16 +233,13 @@ view : Model -> Html msg
 view model =
     Html.div []
         [ Html.text model.message
-        , Glue.view counter model
+        , Glue.view counter (Html.map CounterMsg << Counter.view) model
         ]
 ```
 -}
-
-
-
--- view : Glue model subModel msg subMsg -> model -> Html msg
--- view (Glue { view }) =
--- view
+view : Glue model subModel msg subMsg -> (subModel -> a) -> model -> a
+view (Glue { get }) view =
+    view << get
 
 
 {-| Subscribe to subscriptions defined in submodule.
