@@ -299,13 +299,13 @@ type Msg
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.glue
-        { model = \subModel model -> { model | counter = subModel }
+        { get = .counterModel
+        , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init |> Glue.map CounterMsg
         , update =
             \subMsg model ->
-                Counter.update subMsg model.counter
+                Counter.update subMsg model.counterModel
                     |> Glue.map CounterMsg
-        , view = \model -> Html.map CounterMsg <| Counter.view model.counter
         , subscriptions = \_ -> Sub.none
         }
 ```
