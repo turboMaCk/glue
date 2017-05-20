@@ -251,8 +251,8 @@ view model =
 ```
 -}
 view : Glue model subModel msg subMsg a -> (subModel -> Html a) -> model -> Html msg
-view (Glue { msg, get }) view model =
-    Html.map msg <| view <| get model
+view (Glue { msg, get }) view =
+    Html.map msg << view << get
 
 
 {-| Subscribe to subscriptions defined in submodule.
@@ -289,6 +289,29 @@ subscriptionsWhen cond glue sub model =
 
 
 -- Helpers
+
+
+updateWith : Glue model subModel msg subMsg a -> (subModel -> subModel) -> model -> model
+updateWith (Glue { get, set }) fc model =
+    let
+        subModel =
+            fc <| get model
+    in
+        set subModel model
+
+
+trigger : Glue model subModel msg subMsg a -> (subModel -> Cmd a) -> model -> Cmd msg
+trigger (Glue { msg, get }) fc model =
+    Cmd.map msg <| fc <| get model
+
+
+updateWithTrigger : Glue model subModel msg subMsg a -> (subModel -> ( subModel, Cmd a )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+updateWithTrigger (Glue { msg, get, set }) fc ( model, cmd ) =
+    let
+        ( subModel, subCmd ) =
+            fc <| get model
+    in
+        ( set subModel model, Cmd.batch [ Cmd.map msg subCmd, cmd ] )
 
 
 {-| Tiny abstraction over [`Cmd.map`](http://package.elm-lang.org/packages/elm-lang/core/5.1.1/Platform-Cmd#map)
