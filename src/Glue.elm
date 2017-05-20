@@ -205,7 +205,7 @@ init =
         |> Glue.init secondCounter
 ```
 -}
-init : Glue model subModel msg subMsg a -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
+init : Glue model subModel msg subMsg a -> ( subModel -> b, Cmd msg ) -> ( b, Cmd msg )
 init (Glue { init }) ( fc, cmd ) =
     let
         ( subModel, subCmd ) =
