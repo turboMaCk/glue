@@ -22,7 +22,7 @@ import Bubbling.Main as Bubbling
 import Subscriptions.Main as Subscriptions
 
 
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
@@ -30,12 +30,11 @@ counter =
         , set = \sm m -> { m | counterModel = sm }
         , init = Counter.init
         , update = Counter.update
-        , view = Counter.view
         , subscriptions = Counter.subscriptions
         }
 
 
-bubbling : Glue Model Bubbling.Model Msg Bubbling.Msg
+bubbling : Glue Model Bubbling.Model Msg Bubbling.Msg Bubbling.Msg
 bubbling =
     Glue.simple
         { msg = BubblingMsg
@@ -43,12 +42,11 @@ bubbling =
         , set = \sm m -> { m | bubblingModel = sm }
         , init = Bubbling.init
         , update = Bubbling.update
-        , view = Bubbling.view
         , subscriptions = Bubbling.subscriptions
         }
 
 
-subscriptions : Glue Model Subscriptions.Model Msg Subscriptions.Msg
+subscriptions : Glue Model Subscriptions.Model Msg Subscriptions.Msg Subscriptions.Msg
 subscriptions =
     Glue.simple
         { msg = SubscriptionsMsg
@@ -56,7 +54,6 @@ subscriptions =
         , set = \sm m -> { m | subscriptionsModel = sm }
         , init = Subscriptions.init
         , update = Subscriptions.update
-        , view = Subscriptions.view
         , subscriptions = Subscriptions.subscriptions
         }
 
@@ -135,11 +132,11 @@ view model =
                     , ( "border-radius", "3px" )
                     ]
                 ]
-                [ Glue.view counter model
+                [ Glue.view counter Counter.view model
                 , line
-                , Glue.view bubbling model
+                , Glue.view bubbling Bubbling.view model
                 , line
-                , Glue.view subscriptions model
+                , Glue.view subscriptions Subscriptions.view model
                 ]
             ]
 

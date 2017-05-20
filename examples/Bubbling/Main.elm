@@ -21,14 +21,13 @@ import Glue exposing (Glue)
 import Bubbling.Counter as Counter
 
 
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Msg
 counter =
     Glue.poly
         { get = .counter
         , set = \subModel model -> { model | counter = subModel }
         , init = Counter.init Even
         , update = Counter.update Even
-        , view = Counter.view CounterMsg
         , subscriptions = \_ -> Sub.none
         }
 
@@ -96,7 +95,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Glue.view counter model
+        [ Glue.view counter (Counter.view CounterMsg) model
         , if model.even then
             Html.text "is even"
           else
