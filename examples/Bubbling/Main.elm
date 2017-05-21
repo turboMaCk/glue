@@ -27,8 +27,8 @@ counter =
     Glue.poly
         { get = .counter
         , set = \subModel model -> { model | counter = subModel }
-        , init = Counter.init Even
-        , update = Counter.update Even
+        , init = Counter.init Changed
+        , update = Counter.update Changed
         , subscriptions = \_ -> Sub.none
         }
 
@@ -63,14 +63,14 @@ main =
 
 
 type alias Model =
-    { even : Bool
+    { max : Int
     , counter : Counter.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model False, Cmd.none )
+    ( Model 0, Cmd.none )
         |> Glue.init counter
 
 
@@ -80,18 +80,21 @@ init =
 
 type Msg
     = CounterMsg Counter.Msg
-    | Even
+    | Changed Counter.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
-            ( { model | even = False }, Cmd.none )
+            ( model , Cmd.none )
                 |> Glue.update counter counterMsg
 
-        Even ->
-            ( { model | even = True }, Cmd.none )
+        Changed num ->
+            if num > model.max then
+                ( { model | max = num }, Cmd.none )
+            else
+                ( model, Cmd.none )
 
 
 
@@ -102,8 +105,5 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Glue.view counter (Counter.view CounterMsg) model
-        , if model.even then
-            Html.text "is even"
-          else
-            Html.text "is odd"
+        , Html.text <| "Max historic value: " ++ toString model.max
         ]
