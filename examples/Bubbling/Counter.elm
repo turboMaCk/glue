@@ -1,4 +1,4 @@
-module Bubbling.Counter exposing (Model, Msg, init, update, view)
+module Bubbling.Counter exposing (Model, Msg(..), init, update, view)
 
 import Html exposing (Html)
 import Html.Events
