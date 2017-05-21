@@ -85,7 +85,7 @@ simple :
     , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
     , subscriptions : subModel -> Sub subMsg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg subMsg
 ```
 -}
 simple :
@@ -130,7 +130,7 @@ poly :
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
     , subscriptions : subModel -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg msg
 ```
 -}
 poly :
@@ -169,14 +169,14 @@ This can be caused by nonstandard API where one of the functions uses generic `m
 
 ```
 glue :
-    { msg : subMsg -> msg
+    { msg : a -> msg
     , get : model -> subModel
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
     , subscriptions : model -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg a
 ```
 -}
 glue :
@@ -321,6 +321,7 @@ update msg model =
           model
               |> Glue.updateWith counter (incrementBy 10)
               => Cmd.none
+```
 -}
 updateWith : Glue model subModel msg subMsg a -> (subModel -> subModel) -> model -> model
 updateWith (Glue { get, set }) fc model =
@@ -332,6 +333,9 @@ updateWith (Glue { get, set }) fc model =
 
 
 {-| Trigger Cmd in by child's function
+
+*Commands are async. Therefor trigger don't make any update directly.
+Use [`updateWith`](#updateWith) over `trigger` when you can.*
 
 ```
 triggerIncrement : Counter.Model -> Cmd Counter.Msg
@@ -397,7 +401,8 @@ type Msg
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.glue
-        { get = .counterModel
+        { msg = CounterMsg
+        , get = .counterModel
         , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init |> Glue.map CounterMsg
         , update =
