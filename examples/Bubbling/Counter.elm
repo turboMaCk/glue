@@ -1,4 +1,4 @@
-module Bubbling.Counter exposing (Model, Msg, init, update, view)
+module Bubbling.Counter exposing (Model, Msg(..), init, update, view)
 
 import Html exposing (Html)
 import Html.Events
@@ -12,13 +12,13 @@ type alias Model =
     Int
 
 
-init : msg -> ( Model, Cmd msg )
+init : (Int -> msg) -> ( Model, Cmd msg )
 init msg =
     let
         model =
             0
     in
-        ( model, notifyEven msg model )
+        ( model, notify msg model )
 
 
 
@@ -30,21 +30,13 @@ type Msg
     | Decrement
 
 
-isEven : Int -> Bool
-isEven num =
-    num % 2 == 0
+notify : (Int -> msg) -> Int -> Cmd msg
+notify msg count =
+    Cmd.Extra.perform <| msg count
 
 
-notifyEven : msg -> Model -> Cmd msg
-notifyEven msg model =
-    if isEven model then
-        Cmd.Extra.perform msg
-    else
-        Cmd.none
-
-
-update : msg -> Msg -> Model -> ( Model, Cmd msg )
-update notify msg model =
+update : (Int -> msg) -> Msg -> Model -> ( Model, Cmd msg )
+update parentMsg msg model =
     let
         newModel =
             case msg of
@@ -54,7 +46,7 @@ update notify msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, notifyEven notify newModel )
+        ( newModel, notify parentMsg newModel )
 
 
 

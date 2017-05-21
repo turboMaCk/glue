@@ -20,7 +20,7 @@ import Glue exposing (Glue)
 import Subscriptions.Moves as Moves
 
 
-moves : Glue Model Moves.Model Msg Moves.Msg
+moves : Glue Model Moves.Model Msg Moves.Msg Moves.Msg
 moves =
     Glue.simple
         { msg = MovesMsg
@@ -28,7 +28,6 @@ moves =
         , set = \subModel model -> { model | moves = subModel }
         , init = Moves.init
         , update = Moves.update
-        , view = Moves.view
         , subscriptions = Moves.subscriptions
         }
 
@@ -112,6 +111,6 @@ view model =
             ]
         , Html.div []
             [ Html.text "Position: "
-            , Glue.view moves model
+            , Glue.view moves Moves.view model
             ]
         ]

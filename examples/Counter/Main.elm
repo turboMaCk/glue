@@ -1,4 +1,4 @@
-module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Counter.Main exposing (Model, Msg, init, update, view, subscriptions, increment)
 
 {-| This show how you can glue really simple statefull submodule.
 
@@ -20,7 +20,7 @@ import Glue exposing (Glue)
 import Counter.Counter as Counter
 
 
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
@@ -28,9 +28,16 @@ counter =
         , set = \subModel model -> { model | counter = subModel }
         , init = Counter.init
         , update = Counter.update
-        , view = Counter.view
         , subscriptions = \_ -> Sub.none
         }
+
+
+increment : Model -> Model
+increment model =
+    { model
+        | message = "Counter changed from outside!"
+        , counter = model.counter + 1
+    }
 
 
 
@@ -93,5 +100,5 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Html.text model.message
-        , Glue.view counter model
+        , Glue.view counter Counter.view model
         ]

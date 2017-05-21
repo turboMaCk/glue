@@ -42,21 +42,6 @@ The goals and features of this package are:
 - Enforce common interface in `init` `update` `subscribe` and `view`.
 - *You should read whole README anyway.*
 
-## Downsides
-
-There are certain down-sides to choosing glue over manual usage of `Cmd.map`, `Html.map` and `Sub.map`.
-
-- I'm still thinking about how to work with views which takes multiple arguments where some are neither constant nor
-part of parent's model. For instance you can use routing and have `Route` stored in very top model.
-Then you can easily pass this route to child's view (since you can read it from parent's model).
-However if that child module has another nested module whose view takes `Route` you have a problem.
-It doesn't make sense to store route in every model in chain but `view` part of `Glue` has `model -> Html msg` type signature.
-This means you can't chain this argument without storing it to every model in chain.
-There are workarounds but it would be nice to have build-in solution for this.
-- In 2.x.x it would be nice to have function `updateWith : Glue model subModel msg subMsg -> (subModel -> subModel) -> ( model, Cmd msg ) -> ( model, Cmd msg )`.
-Unfortunetelly this will require breaking change in `Glue` and it's `glue` constructor. This idea is not verified and tested yet.
-
-
 ## Install
 
 Is as you would expect...
@@ -177,7 +162,7 @@ import Glue exposing (Glue)
 -- Counter module
 import Counter
 
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
 counter =
     Glue.simple
         { msg = CounterMsg
@@ -185,7 +170,6 @@ counter =
         , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init
         , update = Counter.update
-        , view = Counter.view
         , subscriptions = \_ -> Sub.none
         }
 ```
@@ -221,7 +205,7 @@ update msg model =
 
 view : Model -> Html Msg
 view =
-    Glue.view counter
+    Glue.view counter Counter.view
 ```
 
 As you can see we're using just `Glue.init`, `Glue.update` and `Glue.view` in these functions to wire child module.
@@ -243,7 +227,7 @@ we don't need to change anything else but that.
 ```elm
 init : ( Model, Cmd msg )
 
-update : Msg -> Model -> ( Model, Cmd msg )
+update : msg -> Model -> ( Model, Cmd msg )
 
 view : (Msg -> msg) -> Model -> Html msg
 view msg model =
@@ -263,21 +247,29 @@ In practice I usually recommend to use record with functions called `Config msg`
 Now we need to change `Glue` type definition in parent module to reflect the new API of `Counter`:
 
 ```elm
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Msg
 counter =
     Glue.poly
         { get = .counterModel
         , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init
         , update = Counter.update
-        , view = Counter.view CounterMsg
         , subscriptions = \_ -> Sub.none
         }
 ```
 
 As you can see we've switch from `Glue.simple` constructor to `Glue.poly` one.
-This means we no longer need to supply `msg` since `Glue.poly` doesn't need it.
-Instead we pass `CounterMsg` to `view` as argument (remember - we've changed view definition previously!).
+Also type anotation of counter has changed. `a` is now `Msg` instead of `Counter.Msg`.
+This is because view now returns `Html Msg` rather then `Html Counter.Msg`.
+This also means we no longer need to supply `msg` since `Glue.poly` doesn't need it (we actully know this should be identity function).
+
+We also need to change parent's view since it's using `Counter.view` which is now changed:
+
+```elm
+view : Model -> Html Msg
+view =
+    Glue.view counter (Counter.view CounterMsg)
+```
 
 ### Child Parent Communication
 
@@ -314,48 +306,36 @@ Using `Cmd` for communication with upper module works like this:
 
 ```
 
-As an example, we can use the (polymorphic) `Counter.elm` again. Let's say we want to send some action to the parent when the counter's value is even.
-
-**Note:**
-*This Example works as demonstration of such a communication and do not really
-reflect real world use-case of this practice. Clearly if parent module is interested
-in whole model of child module (Even/Odd is really tightly related to child's model)
-it should really be part of its Model and passed to child's view as argument rather than other way around.*
+As an example, we can use the (polymorphic) `Counter.elm` again. Let's say we want to
+send some action to the parent whenever its model (count) changes.
 
 For this we need to define a helper function in `Counter.elm`:
 
 ```elm
-isEven : Int -> Bool
-isEven num =
-    num % 2 == 0
+import Cmd.Extra
 
-
-notifyEven : msg -> Model -> Cmd msg
-notifyEven msg model =
-    if isEven model then
-        Cmd.Extra.perform msg
-    else
-        Cmd.none
+notify : (Int -> msg) -> Int -> Cmd msg
+notify msg count =
+    Cmd.Extra.perform <| msg count
 ```
 
-`isEven` is pretty straightforward. It just returns `True` or `False` for a given `Int`.
-`notifyEven` takes the parent's `Msg` constructor and either [`perform`](http://package.elm-lang.org/packages/GlobalWebIndex/cmd-extra/1.0.0/Cmd-Extra#perform)s
-it as `Cmd`, or returns `Cmd.none`.
+`notify` takes the parent's `Msg` constructor that is expecting integer as an argument and performs it as `Cmd`.
 
 Now we need to change `init` and `update` so they're emitting this new `Cmd`.
-The simplest way is just to make them both accept a `msg` constructor similarly to how `view` does:
+The simplest way is just to make them both accept a `msg` constructor.
 
 ```elm
-init : msg -> ( Model, Cmd msg )
+init : (Int -> msg) -> ( Model, Cmd msg )
 init msg =
     let
-        model = 0
+        model =
+            0
     in
-        ( model, notifyEven msg model )
+        ( model, notify msg model )
 
 
-update : msg -> Msg -> Model -> ( Model, Cmd msg )
-update notify msg model =
+update : (Int -> msg) -> Msg -> Model -> ( Model, Cmd msg )
+update parentMsg msg model =
     let
         newModel =
             case msg of
@@ -365,84 +345,77 @@ update notify msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, notifyEven notify newModel )
+        ( newModel, notify parentMsg newModel )
 ```
 
-Now both `init` and `update` should send `Cmd` when `Model` is an even number.
+Now both `init` and `update` should now send `Cmd` after `Model` is updated.
 This is a breaking change to `Counter`'s API so we need to change its integration as well.
 Since we want to actually use this message and do something with it let me first update
 the parent's `Model` and `Msg`:
 
 ```elm
 type alias Model =
-    { isEven : Bool
+    { max : Int
     , counter : Counter.Model
     }
 
 type Msg
     = CounterMsg Counter.Msg
-    | Even
+    | CountChanged Int
 ```
 
-Because we've changed `Model` (added `isEven : Bool`) we should change `init` and `view` of parent to:
+Because we've changed `Model` (added `max : Int`) we should change `init` and `view` of parent to:
 
 ```elm
 init : ( Model, Cmd Msg )
 init =
-    ( Model False, Cmd.none )
+    ( Model 0, Cmd.none )
         |> Glue.init counter
 
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Glue.view counter model
-        , Html.text <|
-            if model.isEven then
-                "is even"
-            else
-                "is odd"
+        [ Glue.view counter (Counter.view CounterMsg) model
+        , Html.text <| "Max historic value: " ++ toString model.max
         ]
 ```
 
 This completes the changes to `Model`. Now we need to change update `update` function
-so it can handle the `Even` message.
+so it can handle the `CountChanged` message.
 
 ```elm
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
-            ( { model | isEven = False }, Cmd.none )
+            ( model , Cmd.none )
                 |> Glue.update counter counterMsg
 
-        Even ->
-            ( { model | isEven = True }, Cmd.none )
+        CountChanged num ->
+            if num > model.max then
+                ( { model | max = num }, Cmd.none )
+            else
+                ( model, Cmd.none )
 ```
 
-As you can see we're setting `even` to `False` on every `CounterMsg`.
-This is because `Counter` is just emitting `Cmd` when its `Model` is Even.
-*Yes this is just example of what is possible.*
-
-To handle the `Even` action itself. This simply sets `isEven = True` in the model.
+As you can see we're setting `max` to received int if its greater than current value.
 
 Since the parent is ready to handle actions from `Counter` our last step is simply
 to update the `Glue` construction for the new APIs:
 
 ```elm
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Msg
 counter =
     Glue.poly
-        { get = .counterModel
-        , set = \subModel model -> { model | counterModel = subModel }
-        , init = Counter.init Even
-        , update = Counter.update Even
-        , view = Counter.view CounterMsg
+        { get = .counter
+        , set = \subModel model -> { model | counter = subModel }
+        , init = Counter.init CountChanged
+        , update = Counter.update CountChanged
         , subscriptions = \_ -> Sub.none
         }
 ```
 
-There we simply pass the parent's `Even` constructor to the `update` and `init` functions of the child here.
-This is enough to update whole wiring.
+There we simply pass the parent's `CountChanged` constructor to the `update` and `init` functions of the child.
 
 See this [complete example](https://github.com/turboMaCk/glue/tree/master/examples/Bubbling) to learn more.
 

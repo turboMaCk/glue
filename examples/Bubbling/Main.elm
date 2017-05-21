@@ -1,4 +1,4 @@
-module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions, triggerIncrement)
 
 {-| This is example of child to parent communication using Cmd bubbling.
 
@@ -14,6 +14,7 @@ import Html exposing (Html)
 -- Library
 
 import Glue exposing (Glue)
+import Cmd.Extra
 
 
 -- Submodules
@@ -21,16 +22,20 @@ import Glue exposing (Glue)
 import Bubbling.Counter as Counter
 
 
-counter : Glue Model Counter.Model Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg Msg
 counter =
     Glue.poly
         { get = .counter
         , set = \subModel model -> { model | counter = subModel }
-        , init = Counter.init Even
-        , update = Counter.update Even
-        , view = Counter.view CounterMsg
+        , init = Counter.init CountChanged
+        , update = Counter.update CountChanged
         , subscriptions = \_ -> Sub.none
         }
+
+
+triggerIncrement : Model -> Cmd Msg
+triggerIncrement _ =
+    Cmd.Extra.perform <| CounterMsg Counter.Increment
 
 
 
@@ -58,14 +63,14 @@ main =
 
 
 type alias Model =
-    { even : Bool
+    { max : Int
     , counter : Counter.Model
     }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model False, Cmd.none )
+    ( Model 0, Cmd.none )
         |> Glue.init counter
 
 
@@ -75,18 +80,21 @@ init =
 
 type Msg
     = CounterMsg Counter.Msg
-    | Even
+    | CountChanged Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
-            ( { model | even = False }, Cmd.none )
+            ( model , Cmd.none )
                 |> Glue.update counter counterMsg
 
-        Even ->
-            ( { model | even = True }, Cmd.none )
+        CountChanged num ->
+            if num > model.max then
+                ( { model | max = num }, Cmd.none )
+            else
+                ( model, Cmd.none )
 
 
 
@@ -96,9 +104,6 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Glue.view counter model
-        , if model.even then
-            Html.text "is even"
-          else
-            Html.text "is odd"
+        [ Glue.view counter (Counter.view CounterMsg) model
+        , Html.text <| "Max historic value: " ++ toString model.max
         ]
