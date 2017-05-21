@@ -332,7 +332,7 @@ updateWith (Glue { get, set }) fc model =
         set subModel model
 
 
-{-| Trigger Cmd in by child's function
+{-| Trigger Cmd by child's function
 
 *Commands are async. Therefor trigger don't make any update directly.
 Use [`updateWith`](#updateWith) over `trigger` when you can.*
@@ -355,7 +355,7 @@ trigger (Glue { msg, get }) fc ( model, cmd ) =
     ( model, Cmd.batch [ Cmd.map msg <| fc <| get model, cmd ] )
 
 
-{-| Similar to [`update`](#update) but using custom function.
+{-| Similar to [`update`](#update) but using function passed as argument.
 
 ```
 increment : Counter.Model -> ( Counter.Model, Cmd Counter.Msg )
