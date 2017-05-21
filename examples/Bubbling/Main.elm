@@ -27,8 +27,8 @@ counter =
     Glue.poly
         { get = .counter
         , set = \subModel model -> { model | counter = subModel }
-        , init = Counter.init Changed
-        , update = Counter.update Changed
+        , init = Counter.init CountChanged
+        , update = Counter.update CountChanged
         , subscriptions = \_ -> Sub.none
         }
 
@@ -80,7 +80,7 @@ init =
 
 type Msg
     = CounterMsg Counter.Msg
-    | Changed Counter.Model
+    | CountChanged Int
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -90,7 +90,7 @@ update msg model =
             ( model , Cmd.none )
                 |> Glue.update counter counterMsg
 
-        Changed num ->
+        CountChanged num ->
             if num > model.max then
                 ( { model | max = num }, Cmd.none )
             else

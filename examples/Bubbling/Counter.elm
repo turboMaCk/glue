@@ -12,7 +12,7 @@ type alias Model =
     Int
 
 
-init : (Model -> msg) -> ( Model, Cmd msg )
+init : (Int -> msg) -> ( Model, Cmd msg )
 init msg =
     let
         model =
@@ -30,13 +30,13 @@ type Msg
     | Decrement
 
 
-notify : (Model -> msg) -> Model -> Cmd msg
-notify msg model =
-    Cmd.Extra.perform <| msg model
+notify : (Int -> msg) -> Int -> Cmd msg
+notify msg count =
+    Cmd.Extra.perform <| msg count
 
 
-update : (Model -> msg) -> Msg -> Model -> ( Model, Cmd msg )
-update event msg model =
+update : (Int -> msg) -> Msg -> Model -> ( Model, Cmd msg )
+update parentMsg msg model =
     let
         newModel =
             case msg of
@@ -46,7 +46,7 @@ update event msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, notify event newModel )
+        ( newModel, notify parentMsg newModel )
 
 
 
