@@ -1,4 +1,4 @@
-module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions, triggerIncrement)
 
 {-| This is example of child to parent communication using Cmd bubbling.
 
@@ -14,6 +14,7 @@ import Html exposing (Html)
 -- Library
 
 import Glue exposing (Glue)
+import Cmd.Extra
 
 
 -- Submodules
@@ -30,6 +31,11 @@ counter =
         , update = Counter.update Even
         , subscriptions = \_ -> Sub.none
         }
+
+
+triggerIncrement : Model -> Cmd Msg
+triggerIncrement _ =
+    Cmd.Extra.perform <| CounterMsg Counter.Increment
 
 
 

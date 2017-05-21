@@ -9,6 +9,9 @@ module Glue
         , view
         , subscriptions
         , subscriptionsWhen
+        , updateWith
+        , trigger
+        , updateWithTrigger
         , map
         )
 
@@ -30,6 +33,10 @@ and [`Html.map`](http://package.elm-lang.org/packages/elm-lang/html/2.0.0/Html#m
 # Basics
 
 @docs init, update, view, subscriptions, subscriptionsWhen
+
+# Custom Operations
+
+@docs updateWith, trigger, updateWithTrigger
 
 # Helpers
 
@@ -78,7 +85,7 @@ simple :
     , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
     , subscriptions : subModel -> Sub subMsg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg subMsg
 ```
 -}
 simple :
@@ -123,7 +130,7 @@ poly :
     , update : subMsg -> subModel -> ( subModel, Cmd msg )
     , subscriptions : subModel -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg msg
 ```
 -}
 poly :
@@ -162,14 +169,14 @@ This can be caused by nonstandard API where one of the functions uses generic `m
 
 ```
 glue :
-    { msg : subMsg -> msg
+    { msg : a -> msg
     , get : model -> subModel
     , set : subModel -> model -> model
     , init : ( subModel, Cmd msg )
     , update : subMsg -> model -> ( subModel, Cmd msg )
     , subscriptions : model -> Sub msg
     }
-    -> Glue model subModel msg subMsg
+    -> Glue model subModel msg subMsg a
 ```
 -}
 glue :
@@ -251,8 +258,8 @@ view model =
 ```
 -}
 view : Glue model subModel msg subMsg a -> (subModel -> Html a) -> model -> Html msg
-view (Glue { msg, get }) view model =
-    Html.map msg <| view <| get model
+view (Glue { msg, get }) view =
+    Html.map msg << view << get
 
 
 {-| Subscribe to subscriptions defined in submodule.
@@ -273,6 +280,10 @@ subscriptions (Glue { subscriptions }) mainSubscriptions =
 {-| Subscribe to subscriptions when model is in some state.
 
 ```
+type alias Model =
+     { subModuleSubsOn : Bool
+     , subModuleModel : SubModule.Model }
+
 subscriptions : Model -> Sub Msg
 subscriptions =
     (\_ -> Mouse.clicks Clicked)
@@ -285,6 +296,87 @@ subscriptionsWhen cond glue sub model =
         subscriptions glue sub model
     else
         sub model
+
+
+
+-- Custom Operations
+
+
+{-| Use child's exposed function to update it's model
+
+```
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
+infixl 0 =>
+
+incrementBy : Int -> Counter.Model -> Counter.Model
+incrementBy num model =
+    model + num
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        IncrementBy10 ->
+          model
+              |> Glue.updateWith counter (incrementBy 10)
+              => Cmd.none
+```
+-}
+updateWith : Glue model subModel msg subMsg a -> (subModel -> subModel) -> model -> model
+updateWith (Glue { get, set }) fc model =
+    let
+        subModel =
+            fc <| get model
+    in
+        set subModel model
+
+
+{-| Trigger Cmd in by child's function
+
+*Commands are async. Therefor trigger don't make any update directly.
+Use [`updateWith`](#updateWith) over `trigger` when you can.*
+
+```
+triggerIncrement : Counter.Model -> Cmd Counter.Msg
+triggerIncrement _ ->
+    Task.perform identity <| Task.succeed Counter.Increment
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        IncrementCounter ->
+            ( model, Cmd.none )
+                |> Glue.trigger counter triggerIncrement
+```
+-}
+trigger : Glue model subModel msg subMsg a -> (subModel -> Cmd a) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+trigger (Glue { msg, get }) fc ( model, cmd ) =
+    ( model, Cmd.batch [ Cmd.map msg <| fc <| get model, cmd ] )
+
+
+{-| Similar to [`update`](#update) but using custom function.
+
+```
+increment : Counter.Model -> ( Counter.Model, Cmd Counter.Msg )
+increment model =
+   ( model + 1, Cmd.none )
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+          IncrementCounter ->
+            ( model, Cmd.none )
+                |> Glue.updateWithTrigger counter increment
+```
+-}
+updateWithTrigger : Glue model subModel msg subMsg a -> (subModel -> ( subModel, Cmd a )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+updateWithTrigger (Glue { msg, get, set }) fc ( model, cmd ) =
+    let
+        ( subModel, subCmd ) =
+            fc <| get model
+    in
+        ( set subModel model, Cmd.batch [ Cmd.map msg subCmd, cmd ] )
 
 
 
@@ -309,7 +401,8 @@ type Msg
 counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
     Glue.glue
-        { get = .counterModel
+        { msg = CounterMsg
+        , get = .counterModel
         , set = \subModel model -> { model | counterModel = subModel }
         , init = Counter.init |> Glue.map CounterMsg
         , update =

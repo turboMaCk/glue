@@ -1,4 +1,4 @@
-module Counter.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Counter.Main exposing (Model, Msg, init, update, view, subscriptions, increment)
 
 {-| This show how you can glue really simple statefull submodule.
 
@@ -30,6 +30,14 @@ counter =
         , update = Counter.update
         , subscriptions = \_ -> Sub.none
         }
+
+
+increment : Model -> Model
+increment model =
+    { model
+        | message = "Counter changed from outside!"
+        , counter = model.counter + 1
+    }
 
 
 

@@ -12,6 +12,7 @@ applications into single html using multiple `embed`s.
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onCheck, onClick)
 import Glue exposing (Glue)
 
 
@@ -62,8 +63,14 @@ subscriptions =
 -- Model
 
 
+type SelectedCounter
+    = First
+    | Second
+
+
 type alias Model =
-    { counterModel : Counter.Model
+    { selectedCounter : SelectedCounter
+    , counterModel : Counter.Model
     , bubblingModel : Bubbling.Model
     , subscriptionsModel : Subscriptions.Model
     }
@@ -71,7 +78,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model, Cmd.none )
+    ( Model First, Cmd.none )
         |> Glue.init counter
         |> Glue.init bubbling
         |> Glue.init subscriptions
@@ -85,6 +92,14 @@ type Msg
     = CounterMsg Counter.Msg
     | BubblingMsg Bubbling.Msg
     | SubscriptionsMsg Subscriptions.Msg
+    | SelectCounter SelectedCounter
+    | IncrementSelected
+
+
+(=>) : a -> b -> ( a, b )
+(=>) =
+    (,)
+infixl 0 =>
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,6 +116,58 @@ update msg model =
         SubscriptionsMsg subscriptionsMsg ->
             ( model, Cmd.none )
                 |> Glue.update subscriptions subscriptionsMsg
+
+        SelectCounter selected ->
+            { model | selectedCounter = selected } => Cmd.none
+
+        IncrementSelected ->
+            case model.selectedCounter of
+                First ->
+                    model
+                        |> Glue.updateWith counter Counter.increment
+                        => Cmd.none
+
+                Second ->
+                    ( model, Cmd.none )
+                        |> Glue.trigger bubbling Bubbling.triggerIncrement
+
+
+countersControlView : Model -> Html Msg
+countersControlView model =
+    let
+        radiosName =
+            name "selected-input"
+    in
+        div []
+            [ text "Update Selected counter:"
+            , div []
+                [ label []
+                    [ text "First counter"
+                    , input
+                        [ type_ "radio"
+                        , radiosName
+                        , checked <| model.selectedCounter == First
+                        , onCheck <| \_ -> SelectCounter First
+                        ]
+                        []
+                    ]
+                , br [] []
+                , label []
+                    [ text "Second counter"
+                    , input
+                        [ type_ "radio"
+                        , radiosName
+                        , checked <| model.selectedCounter == Second
+                        , onCheck <| \_ -> SelectCounter Second
+                        ]
+                        []
+                    ]
+                , div []
+                    [ button [ onClick IncrementSelected ]
+                        [ text "increment selected" ]
+                    ]
+                ]
+            ]
 
 
 view : Model -> Html Msg
@@ -135,6 +202,8 @@ view model =
                 [ Glue.view counter Counter.view model
                 , line
                 , Glue.view bubbling Bubbling.view model
+                , line
+                , countersControlView model
                 , line
                 , Glue.view subscriptions Subscriptions.view model
                 ]
