@@ -319,7 +319,7 @@ notify msg count =
     Cmd.Extra.perform <| msg count
 ```
 
-`notify` takes the parent's `Msg` constructor that is expecting counter's model as argument and performs it as `Cmd`.
+`notify` takes the parent's `Msg` constructor that is expecting integer as an argument and performs it as `Cmd`.
 
 Now we need to change `init` and `update` so they're emitting this new `Cmd`.
 The simplest way is just to make them both accept a `msg` constructor.
