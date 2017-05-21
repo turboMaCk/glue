@@ -9021,17 +9021,13 @@ var _elm_lang$mouse$Mouse$subMap = F2(
 			});
 	});
 _elm_lang$core$Native_Platform.effectManagers['Mouse'] = {pkg: 'elm-lang/mouse', init: _elm_lang$mouse$Mouse$init, onEffects: _elm_lang$mouse$Mouse$onEffects, onSelfMsg: _elm_lang$mouse$Mouse$onSelfMsg, tag: 'sub', subMap: _elm_lang$mouse$Mouse$subMap};
-var _user$project$Bubbling_Counter$isEven = function (num) {
-	return _elm_lang$core$Native_Utils.eq(
-		A2(_elm_lang$core$Basics_ops['%'], num, 2),
-		0);
-};
-var _user$project$Bubbling_Counter$notifyEven = F2(
-	function (msg, model) {
-		return _user$project$Bubbling_Counter$isEven(model) ? _GlobalWebIndex$cmd_extra$Cmd_Extra$perform(msg) : _elm_lang$core$Platform_Cmd$none;
+var _user$project$Bubbling_Counter$notify = F2(
+	function (msg, count) {
+		return _GlobalWebIndex$cmd_extra$Cmd_Extra$perform(
+			msg(count));
 	});
 var _user$project$Bubbling_Counter$update = F3(
-	function (notify, msg, model) {
+	function (parentMsg, msg, model) {
 		var newModel = function () {
 			var _p0 = msg;
 			if (_p0.ctor === 'Increment') {
@@ -9043,7 +9039,7 @@ var _user$project$Bubbling_Counter$update = F3(
 		return {
 			ctor: '_Tuple2',
 			_0: newModel,
-			_1: A2(_user$project$Bubbling_Counter$notifyEven, notify, newModel)
+			_1: A2(_user$project$Bubbling_Counter$notify, parentMsg, newModel)
 		};
 	});
 var _user$project$Bubbling_Counter$init = function (msg) {
@@ -9051,7 +9047,7 @@ var _user$project$Bubbling_Counter$init = function (msg) {
 	return {
 		ctor: '_Tuple2',
 		_0: model,
-		_1: A2(_user$project$Bubbling_Counter$notifyEven, msg, model)
+		_1: A2(_user$project$Bubbling_Counter$notify, msg, model)
 	};
 };
 var _user$project$Bubbling_Counter$Decrement = {ctor: 'Decrement'};
@@ -9110,16 +9106,71 @@ var _user$project$Glue$map = F2(
 			_1: A2(_elm_lang$core$Platform_Cmd$map, constructor, _p1._1)
 		};
 	});
+var _user$project$Glue$updateWithTrigger = F3(
+	function (_p3, fc, _p2) {
+		var _p4 = _p3;
+		var _p5 = _p2;
+		var _p7 = _p5._0;
+		var _p6 = fc(
+			_p4._0.get(_p7));
+		var subModel = _p6._0;
+		var subCmd = _p6._1;
+		return {
+			ctor: '_Tuple2',
+			_0: A2(_p4._0.set, subModel, _p7),
+			_1: _elm_lang$core$Platform_Cmd$batch(
+				{
+					ctor: '::',
+					_0: A2(_elm_lang$core$Platform_Cmd$map, _p4._0.msg, subCmd),
+					_1: {
+						ctor: '::',
+						_0: _p5._1,
+						_1: {ctor: '[]'}
+					}
+				})
+		};
+	});
+var _user$project$Glue$trigger = F3(
+	function (_p9, fc, _p8) {
+		var _p10 = _p9;
+		var _p11 = _p8;
+		var _p12 = _p11._0;
+		return {
+			ctor: '_Tuple2',
+			_0: _p12,
+			_1: _elm_lang$core$Platform_Cmd$batch(
+				{
+					ctor: '::',
+					_0: A2(
+						_elm_lang$core$Platform_Cmd$map,
+						_p10._0.msg,
+						fc(
+							_p10._0.get(_p12))),
+					_1: {
+						ctor: '::',
+						_0: _p11._1,
+						_1: {ctor: '[]'}
+					}
+				})
+		};
+	});
+var _user$project$Glue$updateWith = F3(
+	function (_p13, fc, model) {
+		var _p14 = _p13;
+		var subModel = fc(
+			_p14._0.get(model));
+		return A2(_p14._0.set, subModel, model);
+	});
 var _user$project$Glue$subscriptions = F3(
-	function (_p2, mainSubscriptions, model) {
-		var _p3 = _p2;
+	function (_p15, mainSubscriptions, model) {
+		var _p16 = _p15;
 		return _elm_lang$core$Platform_Sub$batch(
 			{
 				ctor: '::',
 				_0: mainSubscriptions(model),
 				_1: {
 					ctor: '::',
-					_0: _p3._0.subscriptions(model),
+					_0: _p16._0.subscriptions(model),
 					_1: {ctor: '[]'}
 				}
 			});
@@ -9128,47 +9179,54 @@ var _user$project$Glue$subscriptionsWhen = F4(
 	function (cond, glue, sub, model) {
 		return cond(model) ? A3(_user$project$Glue$subscriptions, glue, sub, model) : sub(model);
 	});
-var _user$project$Glue$view = function (_p4) {
-	var _p5 = _p4;
-	return _p5._0.view;
-};
+var _user$project$Glue$view = F2(
+	function (_p17, view) {
+		var _p18 = _p17;
+		return function (_p19) {
+			return A2(
+				_elm_lang$html$Html$map,
+				_p18._0.msg,
+				view(
+					_p18._0.get(_p19)));
+		};
+	});
 var _user$project$Glue$update = F3(
-	function (_p7, subMsg, _p6) {
-		var _p8 = _p7;
-		var _p9 = _p6;
-		var _p11 = _p9._0;
-		var _p10 = A2(_p8._0.update, subMsg, _p11);
-		var subModel = _p10._0;
-		var subCmd = _p10._1;
+	function (_p21, subMsg, _p20) {
+		var _p22 = _p21;
+		var _p23 = _p20;
+		var _p25 = _p23._0;
+		var _p24 = A2(_p22._0.update, subMsg, _p25);
+		var subModel = _p24._0;
+		var subCmd = _p24._1;
 		return {
 			ctor: '_Tuple2',
-			_0: A2(_p8._0.model, subModel, _p11),
+			_0: A2(_p22._0.set, subModel, _p25),
 			_1: _elm_lang$core$Platform_Cmd$batch(
 				{
 					ctor: '::',
 					_0: subCmd,
 					_1: {
 						ctor: '::',
-						_0: _p9._1,
+						_0: _p23._1,
 						_1: {ctor: '[]'}
 					}
 				})
 		};
 	});
 var _user$project$Glue$init = F2(
-	function (_p13, _p12) {
-		var _p14 = _p13;
-		var _p15 = _p12;
-		var _p16 = _p14._0.init;
-		var subModel = _p16._0;
-		var subCmd = _p16._1;
+	function (_p27, _p26) {
+		var _p28 = _p27;
+		var _p29 = _p26;
+		var _p30 = _p28._0.init;
+		var subModel = _p30._0;
+		var subCmd = _p30._1;
 		return {
 			ctor: '_Tuple2',
-			_0: _p15._0(subModel),
+			_0: _p29._0(subModel),
 			_1: _elm_lang$core$Platform_Cmd$batch(
 				{
 					ctor: '::',
-					_0: _p15._1,
+					_0: _p29._1,
 					_1: {
 						ctor: '::',
 						_0: subCmd,
@@ -9180,72 +9238,64 @@ var _user$project$Glue$init = F2(
 var _user$project$Glue$Glue = function (a) {
 	return {ctor: 'Glue', _0: a};
 };
-var _user$project$Glue$simple = function (_p17) {
-	var _p18 = _p17;
-	var _p20 = _p18.msg;
-	var _p19 = _p18.get;
+var _user$project$Glue$simple = function (_p31) {
+	var _p32 = _p31;
+	var _p34 = _p32.msg;
+	var _p33 = _p32.get;
 	return _user$project$Glue$Glue(
 		{
-			model: _p18.set,
-			init: A2(_user$project$Glue$map, _p20, _p18.init),
+			msg: _p34,
+			get: _p33,
+			set: _p32.set,
+			init: A2(_user$project$Glue$map, _p34, _p32.init),
 			update: F2(
 				function (subMsg, model) {
 					return A2(
 						_user$project$Glue$map,
-						_p20,
+						_p34,
 						A2(
-							_p18.update,
+							_p32.update,
 							subMsg,
-							_p19(model)));
+							_p33(model)));
 				}),
-			view: function (model) {
-				return A2(
-					_elm_lang$html$Html$map,
-					_p20,
-					_p18.view(
-						_p19(model)));
-			},
 			subscriptions: function (model) {
 				return A2(
 					_elm_lang$core$Platform_Sub$map,
-					_p20,
-					_p18.subscriptions(
-						_p19(model)));
+					_p34,
+					_p32.subscriptions(
+						_p33(model)));
 			}
 		});
 };
-var _user$project$Glue$poly = function (_p21) {
-	var _p22 = _p21;
-	var _p23 = _p22.get;
+var _user$project$Glue$poly = function (_p35) {
+	var _p36 = _p35;
+	var _p37 = _p36.get;
 	return _user$project$Glue$Glue(
 		{
-			model: _p22.set,
-			init: _p22.init,
+			msg: _elm_lang$core$Basics$identity,
+			get: _p37,
+			set: _p36.set,
+			init: _p36.init,
 			update: F2(
 				function (subMsg, model) {
 					return A2(
-						_p22.update,
+						_p36.update,
 						subMsg,
-						_p23(model));
+						_p37(model));
 				}),
-			view: function (model) {
-				return _p22.view(
-					_p23(model));
-			},
 			subscriptions: function (model) {
-				return _p22.subscriptions(
-					_p23(model));
+				return _p36.subscriptions(
+					_p37(model));
 			}
 		});
 };
 var _user$project$Glue$glue = _user$project$Glue$Glue;
 var _user$project$Bubbling_Main$Model = F2(
 	function (a, b) {
-		return {even: a, counter: b};
+		return {max: a, counter: b};
 	});
-var _user$project$Bubbling_Main$Even = {ctor: 'Even'};
-var _user$project$Bubbling_Main$CounterMsg = function (a) {
-	return {ctor: 'CounterMsg', _0: a};
+var _user$project$Bubbling_Main$CountChanged = function (a) {
+	return {ctor: 'CountChanged', _0: a};
 };
 var _user$project$Bubbling_Main$counter = _user$project$Glue$poly(
 	{
@@ -9258,9 +9308,8 @@ var _user$project$Bubbling_Main$counter = _user$project$Glue$poly(
 					model,
 					{counter: subModel});
 			}),
-		init: _user$project$Bubbling_Counter$init(_user$project$Bubbling_Main$Even),
-		update: _user$project$Bubbling_Counter$update(_user$project$Bubbling_Main$Even),
-		view: _user$project$Bubbling_Counter$view(_user$project$Bubbling_Main$CounterMsg),
+		init: _user$project$Bubbling_Counter$init(_user$project$Bubbling_Main$CountChanged),
+		update: _user$project$Bubbling_Counter$update(_user$project$Bubbling_Main$CountChanged),
 		subscriptions: function (_p0) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
@@ -9276,7 +9325,7 @@ var _user$project$Bubbling_Main$init = A2(
 	_user$project$Bubbling_Main$counter,
 	{
 		ctor: '_Tuple2',
-		_0: _user$project$Bubbling_Main$Model(false),
+		_0: _user$project$Bubbling_Main$Model(0),
 		_1: _elm_lang$core$Platform_Cmd$none
 	});
 var _user$project$Bubbling_Main$update = F2(
@@ -9287,33 +9336,43 @@ var _user$project$Bubbling_Main$update = F2(
 				_user$project$Glue$update,
 				_user$project$Bubbling_Main$counter,
 				_p2._0,
-				{
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{even: false}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				});
+				{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
 		} else {
-			return {
+			var _p3 = _p2._0;
+			return (_elm_lang$core$Native_Utils.cmp(_p3, model.max) > 0) ? {
 				ctor: '_Tuple2',
 				_0: _elm_lang$core$Native_Utils.update(
 					model,
-					{even: true}),
+					{max: _p3}),
 				_1: _elm_lang$core$Platform_Cmd$none
-			};
+			} : {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 		}
 	});
+var _user$project$Bubbling_Main$CounterMsg = function (a) {
+	return {ctor: 'CounterMsg', _0: a};
+};
+var _user$project$Bubbling_Main$triggerIncrement = function (_p4) {
+	return _GlobalWebIndex$cmd_extra$Cmd_Extra$perform(
+		_user$project$Bubbling_Main$CounterMsg(_user$project$Bubbling_Counter$Increment));
+};
 var _user$project$Bubbling_Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
 		{
 			ctor: '::',
-			_0: A2(_user$project$Glue$view, _user$project$Bubbling_Main$counter, model),
+			_0: A3(
+				_user$project$Glue$view,
+				_user$project$Bubbling_Main$counter,
+				_user$project$Bubbling_Counter$view(_user$project$Bubbling_Main$CounterMsg),
+				model),
 			_1: {
 				ctor: '::',
-				_0: model.even ? _elm_lang$html$Html$text('is even') : _elm_lang$html$Html$text('is odd'),
+				_0: _elm_lang$html$Html$text(
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						'Max historic value: ',
+						_elm_lang$core$Basics$toString(model.max))),
 				_1: {ctor: '[]'}
 			}
 		});
@@ -9376,6 +9435,11 @@ var _user$project$Counter_Counter$view = function (model) {
 			}
 		});
 };
+var _user$project$Counter_Main$increment = function (model) {
+	return _elm_lang$core$Native_Utils.update(
+		model,
+		{message: 'Counter changed from outside!', counter: model.counter + 1});
+};
 var _user$project$Counter_Main$Model = F2(
 	function (a, b) {
 		return {message: a, counter: b};
@@ -9397,7 +9461,6 @@ var _user$project$Counter_Main$counter = _user$project$Glue$simple(
 			}),
 		init: _user$project$Counter_Counter$init,
 		update: _user$project$Counter_Counter$update,
-		view: _user$project$Counter_Counter$view,
 		subscriptions: function (_p0) {
 			return _elm_lang$core$Platform_Sub$none;
 		}
@@ -9440,7 +9503,7 @@ var _user$project$Counter_Main$view = function (model) {
 			_0: _elm_lang$html$Html$text(model.message),
 			_1: {
 				ctor: '::',
-				_0: A2(_user$project$Glue$view, _user$project$Counter_Main$counter, model),
+				_0: A3(_user$project$Glue$view, _user$project$Counter_Main$counter, _user$project$Counter_Counter$view, model),
 				_1: {ctor: '[]'}
 			}
 		});
@@ -9494,7 +9557,6 @@ var _user$project$Subscriptions_Main$moves = _user$project$Glue$simple(
 			}),
 		init: _user$project$Subscriptions_Moves$init,
 		update: _user$project$Subscriptions_Moves$update,
-		view: _user$project$Subscriptions_Moves$view,
 		subscriptions: _user$project$Subscriptions_Moves$subscriptions
 	});
 var _user$project$Subscriptions_Main$init = A2(
@@ -9592,7 +9654,7 @@ var _user$project$Subscriptions_Main$view = function (model) {
 							_0: _elm_lang$html$Html$text('Position: '),
 							_1: {
 								ctor: '::',
-								_0: A2(_user$project$Glue$view, _user$project$Subscriptions_Main$moves, model),
+								_0: A3(_user$project$Glue$view, _user$project$Subscriptions_Main$moves, _user$project$Subscriptions_Moves$view, model),
 								_1: {ctor: '[]'}
 							}
 						}),
@@ -9615,10 +9677,144 @@ var _user$project$Subscriptions_Main$subscriptions = A3(
 	});
 var _user$project$Subscriptions_Main$main = _elm_lang$html$Html$program(
 	{init: _user$project$Subscriptions_Main$init, update: _user$project$Subscriptions_Main$update, view: _user$project$Subscriptions_Main$view, subscriptions: _user$project$Subscriptions_Main$subscriptions})();
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {counterModel: a, bubblingModel: b, subscriptionsModel: c};
+var _user$project$Main_ops = _user$project$Main_ops || {};
+_user$project$Main_ops['=>'] = F2(
+	function (v0, v1) {
+		return {ctor: '_Tuple2', _0: v0, _1: v1};
 	});
+var _user$project$Main$Model = F4(
+	function (a, b, c, d) {
+		return {selectedCounter: a, counterModel: b, bubblingModel: c, subscriptionsModel: d};
+	});
+var _user$project$Main$Second = {ctor: 'Second'};
+var _user$project$Main$First = {ctor: 'First'};
+var _user$project$Main$IncrementSelected = {ctor: 'IncrementSelected'};
+var _user$project$Main$SelectCounter = function (a) {
+	return {ctor: 'SelectCounter', _0: a};
+};
+var _user$project$Main$countersControlView = function (model) {
+	var radiosName = _elm_lang$html$Html_Attributes$name('selected-input');
+	return A2(
+		_elm_lang$html$Html$div,
+		{ctor: '[]'},
+		{
+			ctor: '::',
+			_0: _elm_lang$html$Html$text('Update Selected counter:'),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{ctor: '[]'},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$label,
+							{ctor: '[]'},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text('First counter'),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$input,
+										{
+											ctor: '::',
+											_0: _elm_lang$html$Html_Attributes$type_('radio'),
+											_1: {
+												ctor: '::',
+												_0: radiosName,
+												_1: {
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$checked(
+														_elm_lang$core$Native_Utils.eq(model.selectedCounter, _user$project$Main$First)),
+													_1: {
+														ctor: '::',
+														_0: _elm_lang$html$Html_Events$onCheck(
+															function (_p0) {
+																return _user$project$Main$SelectCounter(_user$project$Main$First);
+															}),
+														_1: {ctor: '[]'}
+													}
+												}
+											}
+										},
+										{ctor: '[]'}),
+									_1: {ctor: '[]'}
+								}
+							}),
+						_1: {
+							ctor: '::',
+							_0: A2(
+								_elm_lang$html$Html$br,
+								{ctor: '[]'},
+								{ctor: '[]'}),
+							_1: {
+								ctor: '::',
+								_0: A2(
+									_elm_lang$html$Html$label,
+									{ctor: '[]'},
+									{
+										ctor: '::',
+										_0: _elm_lang$html$Html$text('Second counter'),
+										_1: {
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$input,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Attributes$type_('radio'),
+													_1: {
+														ctor: '::',
+														_0: radiosName,
+														_1: {
+															ctor: '::',
+															_0: _elm_lang$html$Html_Attributes$checked(
+																_elm_lang$core$Native_Utils.eq(model.selectedCounter, _user$project$Main$Second)),
+															_1: {
+																ctor: '::',
+																_0: _elm_lang$html$Html_Events$onCheck(
+																	function (_p1) {
+																		return _user$project$Main$SelectCounter(_user$project$Main$Second);
+																	}),
+																_1: {ctor: '[]'}
+															}
+														}
+													}
+												},
+												{ctor: '[]'}),
+											_1: {ctor: '[]'}
+										}
+									}),
+								_1: {
+									ctor: '::',
+									_0: A2(
+										_elm_lang$html$Html$div,
+										{ctor: '[]'},
+										{
+											ctor: '::',
+											_0: A2(
+												_elm_lang$html$Html$button,
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html_Events$onClick(_user$project$Main$IncrementSelected),
+													_1: {ctor: '[]'}
+												},
+												{
+													ctor: '::',
+													_0: _elm_lang$html$Html$text('increment selected'),
+													_1: {ctor: '[]'}
+												}),
+											_1: {ctor: '[]'}
+										}),
+									_1: {ctor: '[]'}
+								}
+							}
+						}
+					}),
+				_1: {ctor: '[]'}
+			}
+		});
+};
 var _user$project$Main$SubscriptionsMsg = function (a) {
 	return {ctor: 'SubscriptionsMsg', _0: a};
 };
@@ -9636,7 +9832,6 @@ var _user$project$Main$subscriptions = _user$project$Glue$simple(
 			}),
 		init: _user$project$Subscriptions_Main$init,
 		update: _user$project$Subscriptions_Main$update,
-		view: _user$project$Subscriptions_Main$view,
 		subscriptions: _user$project$Subscriptions_Main$subscriptions
 	});
 var _user$project$Main$BubblingMsg = function (a) {
@@ -9656,7 +9851,6 @@ var _user$project$Main$bubbling = _user$project$Glue$simple(
 			}),
 		init: _user$project$Bubbling_Main$init,
 		update: _user$project$Bubbling_Main$update,
-		view: _user$project$Bubbling_Main$view,
 		subscriptions: _user$project$Bubbling_Main$subscriptions
 	});
 var _user$project$Main$CounterMsg = function (a) {
@@ -9676,7 +9870,6 @@ var _user$project$Main$counter = _user$project$Glue$simple(
 			}),
 		init: _user$project$Counter_Main$init,
 		update: _user$project$Counter_Main$update,
-		view: _user$project$Counter_Main$view,
 		subscriptions: _user$project$Counter_Main$subscriptions
 	});
 var _user$project$Main$init = A2(
@@ -9688,29 +9881,54 @@ var _user$project$Main$init = A2(
 		A2(
 			_user$project$Glue$init,
 			_user$project$Main$counter,
-			{ctor: '_Tuple2', _0: _user$project$Main$Model, _1: _elm_lang$core$Platform_Cmd$none})));
+			{
+				ctor: '_Tuple2',
+				_0: _user$project$Main$Model(_user$project$Main$First),
+				_1: _elm_lang$core$Platform_Cmd$none
+			})));
 var _user$project$Main$update = F2(
 	function (msg, model) {
-		var _p0 = msg;
-		switch (_p0.ctor) {
+		var _p2 = msg;
+		switch (_p2.ctor) {
 			case 'CounterMsg':
 				return A3(
 					_user$project$Glue$update,
 					_user$project$Main$counter,
-					_p0._0,
+					_p2._0,
 					{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
 			case 'BubblingMsg':
 				return A3(
 					_user$project$Glue$update,
 					_user$project$Main$bubbling,
-					_p0._0,
+					_p2._0,
 					{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
-			default:
+			case 'SubscriptionsMsg':
 				return A3(
 					_user$project$Glue$update,
 					_user$project$Main$subscriptions,
-					_p0._0,
+					_p2._0,
 					{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
+			case 'SelectCounter':
+				return A2(
+					_user$project$Main_ops['=>'],
+					_elm_lang$core$Native_Utils.update(
+						model,
+						{selectedCounter: _p2._0}),
+					_elm_lang$core$Platform_Cmd$none);
+			default:
+				var _p3 = model.selectedCounter;
+				if (_p3.ctor === 'First') {
+					return A2(
+						_user$project$Main_ops['=>'],
+						A3(_user$project$Glue$updateWith, _user$project$Main$counter, _user$project$Counter_Main$increment, model),
+						_elm_lang$core$Platform_Cmd$none);
+				} else {
+					return A3(
+						_user$project$Glue$trigger,
+						_user$project$Main$bubbling,
+						_user$project$Bubbling_Main$triggerIncrement,
+						{ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none});
+				}
 		}
 	});
 var _user$project$Main$view = function (model) {
@@ -9803,20 +10021,28 @@ var _user$project$Main$view = function (model) {
 				},
 				{
 					ctor: '::',
-					_0: A2(_user$project$Glue$view, _user$project$Main$counter, model),
+					_0: A3(_user$project$Glue$view, _user$project$Main$counter, _user$project$Counter_Main$view, model),
 					_1: {
 						ctor: '::',
 						_0: line,
 						_1: {
 							ctor: '::',
-							_0: A2(_user$project$Glue$view, _user$project$Main$bubbling, model),
+							_0: A3(_user$project$Glue$view, _user$project$Main$bubbling, _user$project$Bubbling_Main$view, model),
 							_1: {
 								ctor: '::',
 								_0: line,
 								_1: {
 									ctor: '::',
-									_0: A2(_user$project$Glue$view, _user$project$Main$subscriptions, model),
-									_1: {ctor: '[]'}
+									_0: _user$project$Main$countersControlView(model),
+									_1: {
+										ctor: '::',
+										_0: line,
+										_1: {
+											ctor: '::',
+											_0: A3(_user$project$Glue$view, _user$project$Main$subscriptions, _user$project$Subscriptions_Main$view, model),
+											_1: {ctor: '[]'}
+										}
+									}
 								}
 							}
 						}
