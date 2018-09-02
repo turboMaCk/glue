@@ -43,4 +43,4 @@ install:
 
 script:
   - elm make
-  - pusd examples & elm-make & popd
+  - pushd examples & elm-make & popd
