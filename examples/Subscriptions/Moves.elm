@@ -1,12 +1,14 @@
-module Subscriptions.Moves exposing (Model, Msg, init, update, view, subscriptions)
+module Subscriptions.Moves exposing (Model, Msg, init, subscriptions, update, view)
 
 {-| This demostrates how subscription composition works with glueing.
 
 Please be aware that this example was made just for purposes of this demonstration.
+
 -}
 
 import Html exposing (Html)
 import Mouse exposing (Position)
+
 
 
 -- Subscriptions
@@ -42,7 +44,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Moved position ->
-            position ! []
+            ( position
+            , Cmd.none
+            )
 
 
 

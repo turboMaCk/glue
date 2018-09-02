@@ -1,22 +1,17 @@
-module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Subscriptions.Main exposing (Model, Msg, init, subscriptions, update, view)
 
 {-| This is example of slightly bit more complex management of subscriptions
 between parent and child.
 -}
 
+-- Library
+-- Submodules
+
+import Glue exposing (Glue)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)
 import Mouse exposing (Position)
-
-
--- Library
-
-import Glue exposing (Glue)
-
-
--- Submodules
-
 import Subscriptions.Moves as Moves
 
 
@@ -100,8 +95,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Clicks: " ++ (toString model.clicks)
-        , Html.label [ HtmlA.style [ ( "display", "block" ) ] ]
+        [ Html.text <| "Clicks: " ++ toString model.clicks
+        , Html.label [ HtmlA.style "display" "block" ]
             [ Html.text "subscribe to mouse moves"
             , Html.input
                 [ onCheck ToggleMoves

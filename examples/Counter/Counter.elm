@@ -4,6 +4,7 @@ import Html exposing (Html)
 import Html.Events
 
 
+
 -- Model
 
 
@@ -36,7 +37,7 @@ update msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, Cmd.none )
+    ( newModel, Cmd.none )
 
 
 

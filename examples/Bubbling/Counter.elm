@@ -1,8 +1,9 @@
 module Bubbling.Counter exposing (Model, Msg(..), init, update, view)
 
+import Cmd.Extra
 import Html exposing (Html)
 import Html.Events
-import Cmd.Extra
+
 
 
 -- Model
@@ -18,7 +19,7 @@ init msg =
         model =
             0
     in
-        ( model, notify msg model )
+    ( model, notify msg model )
 
 
 
@@ -46,7 +47,7 @@ update parentMsg msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, notify parentMsg newModel )
+    ( newModel, notify parentMsg newModel )
 
 
 

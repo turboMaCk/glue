@@ -303,7 +303,8 @@ subscriptionsWhen cond g sub model =
             IncrementBy10 ->
                 ( model
                     |> Glue.updateWith counter (incrementBy 10)
-                , Cmd.none )
+                , Cmd.none
+                )
 
 -}
 updateWith : Glue model subModel msg subMsg a -> (subModel -> subModel) -> model -> model
