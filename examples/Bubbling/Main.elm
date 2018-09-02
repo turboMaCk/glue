@@ -29,7 +29,7 @@ counter =
 
 triggerIncrement : Model -> Cmd Msg
 triggerIncrement _ =
-    Cmd.none
+    Task.perform identity <| Task.succeed <| CounterMsg Counter.Increment
 
 
 

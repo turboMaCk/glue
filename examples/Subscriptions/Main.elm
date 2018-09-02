@@ -6,12 +6,14 @@ between parent and child.
 
 -- import Browser exposing (Position)
 
+import Browser
+import Browser.Events
 import Glue exposing (Glue)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)
-import Subscriptions.Moves as Moves
-import Browser
+import Json.Decode as Decode
+import Subscriptions.Moves as Moves exposing (Position)
 
 
 moves : Glue Model Moves.Model Msg Moves.Msg Moves.Msg
@@ -32,7 +34,7 @@ moves =
 
 subscriptions : Model -> Sub Msg
 subscriptions =
-    (\_ -> Sub.none)
+    (\_ -> Browser.Events.onClick <| Decode.map Clicked Moves.positionDecoder)
         |> Glue.subscriptionsWhen .movesOn moves
 
 
