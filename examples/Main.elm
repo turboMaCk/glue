@@ -20,6 +20,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onCheck, onClick)
 import Subscriptions.Main as Subscriptions
+import Browser
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
@@ -95,14 +96,6 @@ type Msg
     | IncrementSelected
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    \a b -> ( a, b )
-
-
-infixl 0 =>
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -119,14 +112,16 @@ update msg model =
                 |> Glue.update subscriptions subscriptionsMsg
 
         SelectCounter selected ->
-            { model | selectedCounter = selected } => Cmd.none
+            ( { model | selectedCounter = selected }, Cmd.none )
 
         IncrementSelected ->
             case model.selectedCounter of
                 First ->
-                    model
-                        |> Glue.updateWith counter Counter.increment
-                        => Cmd.none
+                    ( model
+                        |> Glue.updateWith counter
+                            Counter.increment
+                    , Cmd.none
+                    )
 
                 Second ->
                     ( model, Cmd.none )
@@ -223,10 +218,10 @@ subscriptions_ =
 -- Main
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions_

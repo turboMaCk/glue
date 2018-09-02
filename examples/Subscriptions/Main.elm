@@ -4,15 +4,14 @@ module Subscriptions.Main exposing (Model, Msg, init, subscriptions, update, vie
 between parent and child.
 -}
 
--- Library
--- Submodules
+-- import Browser exposing (Position)
 
 import Glue exposing (Glue)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)
-import Mouse exposing (Position)
 import Subscriptions.Moves as Moves
+import Browser
 
 
 moves : Glue Model Moves.Model Msg Moves.Msg Moves.Msg
@@ -33,14 +32,14 @@ moves =
 
 subscriptions : Model -> Sub Msg
 subscriptions =
-    (\_ -> Mouse.clicks Clicked)
+    (\_ -> Sub.none)
         |> Glue.subscriptionsWhen .movesOn moves
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -69,7 +68,7 @@ init =
 
 
 type Msg
-    = Clicked Position
+    = Clicked { x : Int, y : Int }
     | MovesMsg Moves.Msg
     | ToggleMoves Bool
 
@@ -95,7 +94,7 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Clicks: " ++ toString model.clicks
+        [ Html.text <| "Clicks: " ++ String.fromInt model.clicks
         , Html.label [ HtmlA.style "display" "block" ]
             [ Html.text "subscribe to mouse moves"
             , Html.input

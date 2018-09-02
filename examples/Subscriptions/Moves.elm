@@ -7,20 +7,24 @@ Please be aware that this example was made just for purposes of this demonstrati
 -}
 
 import Html exposing (Html)
-import Mouse exposing (Position)
 
 
-
+-- import Mouse exposing (Position)
 -- Subscriptions
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Mouse.moves Moved
+    Sub.none
 
 
 
+-- Mouse.moves Moved
 -- Model
+
+
+type alias Position =
+    { x : Int, y : Int }
 
 
 type alias Model =
@@ -55,4 +59,4 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.text <| toString model
+    Html.text <| "x: " ++ String.fromInt model.x ++ " y: " ++ String.fromInt model.y

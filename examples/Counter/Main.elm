@@ -8,12 +8,10 @@ for something as simple as counter and text which are interested in same action.
 
 -}
 
--- Library
--- Submodules
-
 import Counter.Counter as Counter
 import Glue exposing (Glue)
 import Html exposing (Html)
+import Browser
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
@@ -46,10 +44,10 @@ subscriptions =
         |> Glue.subscriptions counter
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions

@@ -9,13 +9,11 @@ it should really be part of its Model and passed to child rather than other way 
 
 -}
 
--- Library
--- Submodules
-
+import Browser
 import Bubbling.Counter as Counter
-import Cmd.Extra
 import Glue exposing (Glue)
 import Html exposing (Html)
+import Task
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Msg
@@ -31,7 +29,7 @@ counter =
 
 triggerIncrement : Model -> Cmd Msg
 triggerIncrement _ =
-    Cmd.Extra.perform <| CounterMsg Counter.Increment
+    Cmd.none
 
 
 
@@ -44,10 +42,10 @@ subscriptions =
         |> Glue.subscriptions counter
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -89,7 +87,6 @@ update msg model =
         CountChanged num ->
             if num > model.max then
                 ( { model | max = num }, Cmd.none )
-
             else
                 ( model, Cmd.none )
 
@@ -102,5 +99,5 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Glue.view counter (Counter.view CounterMsg) model
-        , Html.text <| "Max historic value: " ++ toString model.max
+        , Html.text <| "Max historic value: " ++ String.fromInt model.max
         ]

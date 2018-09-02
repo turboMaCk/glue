@@ -1,8 +1,8 @@
 module Bubbling.Counter exposing (Model, Msg(..), init, update, view)
 
-import Cmd.Extra
 import Html exposing (Html)
 import Html.Events
+import Task
 
 
 
@@ -33,7 +33,7 @@ type Msg
 
 notify : (Int -> msg) -> Int -> Cmd msg
 notify msg count =
-    Cmd.Extra.perform <| msg count
+    Task.perform identity <| Task.succeed <| msg count
 
 
 update : (Int -> msg) -> Msg -> Model -> ( Model, Cmd msg )
@@ -60,6 +60,6 @@ view msg model =
         Html.div
             []
             [ Html.button [ Html.Events.onClick Decrement ] [ Html.text "-" ]
-            , Html.text <| toString model
+            , Html.text <| String.fromInt model
             , Html.button [ Html.Events.onClick Increment ] [ Html.text "+" ]
             ]

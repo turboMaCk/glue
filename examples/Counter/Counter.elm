@@ -49,6 +49,6 @@ view model =
     Html.div
         []
         [ Html.button [ Html.Events.onClick Decrement ] [ Html.text "-" ]
-        , Html.text <| toString model
+        , Html.text <| String.fromInt model
         , Html.button [ Html.Events.onClick Increment ] [ Html.text "+" ]
         ]
