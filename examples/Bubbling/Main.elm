@@ -1,4 +1,4 @@
-module Bubbling.Main exposing (Model, Msg, init, update, view, subscriptions, triggerIncrement)
+module Bubbling.Main exposing (Model, Msg, init, subscriptions, triggerIncrement, update, view)
 
 {-| This is example of child to parent communication using Cmd bubbling.
 
@@ -6,20 +6,14 @@ This Example works as demonstration of such a communication and do not really
 reflect real world use-case of this practice. Clearly if parent component is interested
 in model of sub component (Even/Odd is really tightly related to child model)
 it should really be part of its Model and passed to child rather than other way around.
+
 -}
 
-import Html exposing (Html)
-
-
--- Library
-
-import Glue exposing (Glue)
-import Cmd.Extra
-
-
--- Submodules
-
+import Browser
 import Bubbling.Counter as Counter
+import Glue exposing (Glue)
+import Html exposing (Html)
+import Task
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Msg
@@ -35,7 +29,7 @@ counter =
 
 triggerIncrement : Model -> Cmd Msg
 triggerIncrement _ =
-    Cmd.Extra.perform <| CounterMsg Counter.Increment
+    Task.perform identity <| Task.succeed <| CounterMsg Counter.Increment
 
 
 
@@ -48,10 +42,10 @@ subscriptions =
         |> Glue.subscriptions counter
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -87,7 +81,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         CounterMsg counterMsg ->
-            ( model , Cmd.none )
+            ( model, Cmd.none )
                 |> Glue.update counter counterMsg
 
         CountChanged num ->
@@ -105,5 +99,5 @@ view : Model -> Html Msg
 view model =
     Html.div []
         [ Glue.view counter (Counter.view CounterMsg) model
-        , Html.text <| "Max historic value: " ++ toString model.max
+        , Html.text <| "Max historic value: " ++ String.fromInt model.max
         ]

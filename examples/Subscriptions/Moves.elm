@@ -1,12 +1,14 @@
-module Subscriptions.Moves exposing (Model, Msg, init, update, view, subscriptions)
+module Subscriptions.Moves exposing (Model, Msg, Position, init, positionDecoder, subscriptions, update, view)
 
 {-| This demostrates how subscription composition works with glueing.
 
 Please be aware that this example was made just for purposes of this demonstration.
+
 -}
 
+import Browser.Events
 import Html exposing (Html)
-import Mouse exposing (Position)
+import Json.Decode as Decode exposing (Decoder)
 
 
 -- Subscriptions
@@ -14,11 +16,22 @@ import Mouse exposing (Position)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Mouse.moves Moved
+    Browser.Events.onMouseMove <| Decode.map Moved positionDecoder
 
 
 
 -- Model
+
+
+type alias Position =
+    { x : Int, y : Int }
+
+
+positionDecoder : Decoder Position
+positionDecoder =
+    Decode.map2 (\x y -> { x = x, y = y })
+        (Decode.field "x" Decode.int)
+        (Decode.field "x" Decode.int)
 
 
 type alias Model =
@@ -42,7 +55,9 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         Moved position ->
-            position ! []
+            ( position
+            , Cmd.none
+            )
 
 
 
@@ -51,4 +66,4 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    Html.text <| toString model
+    Html.text <| "x: " ++ String.fromInt model.x ++ " y: " ++ String.fromInt model.y

@@ -1,23 +1,17 @@
-module Counter.Main exposing (Model, Msg, init, update, view, subscriptions, increment)
+module Counter.Main exposing (Model, Msg, increment, init, subscriptions, update, view)
 
 {-| This show how you can glue really simple statefull submodule.
 
 This example is quite artificial demostration of what is possible to do with `Glue`.
 In real world it probably doesn't make sense to use similar approach
 for something as simple as counter and text which are interested in same action.
+
 -}
 
-import Html exposing (Html)
-
-
--- Library
-
-import Glue exposing (Glue)
-
-
--- Submodules
-
 import Counter.Counter as Counter
+import Glue exposing (Glue)
+import Html exposing (Html)
+import Browser
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
@@ -50,10 +44,10 @@ subscriptions =
         |> Glue.subscriptions counter
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions

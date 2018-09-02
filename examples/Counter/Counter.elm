@@ -4,6 +4,7 @@ import Html exposing (Html)
 import Html.Events
 
 
+
 -- Model
 
 
@@ -36,7 +37,7 @@ update msg model =
                 Decrement ->
                     model - 1
     in
-        ( newModel, Cmd.none )
+    ( newModel, Cmd.none )
 
 
 
@@ -48,6 +49,6 @@ view model =
     Html.div
         []
         [ Html.button [ Html.Events.onClick Decrement ] [ Html.text "-" ]
-        , Html.text <| toString model
+        , Html.text <| String.fromInt model
         , Html.button [ Html.Events.onClick Increment ] [ Html.text "+" ]
         ]

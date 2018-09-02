@@ -1,4 +1,4 @@
-module Main exposing (..)
+module Main exposing (Model, Msg(..), SelectedCounter(..), bubbling, counter, countersControlView, init, main, subscriptions, subscriptions_, update, view)
 
 {-| This module glues all other examples into one Html.Program
 
@@ -8,19 +8,19 @@ than all examples are up to data with recent API.
 It's really discutable if something like this is usefull in practice.
 Generally I would say it's not in most cases. This is really like rendering multiple TEA
 applications into single html using multiple `embed`s.
+
 -}
-
-import Html exposing (..)
-import Html.Attributes exposing (..)
-import Html.Events exposing (onCheck, onClick)
-import Glue exposing (Glue)
-
 
 -- Sub Modules
 
-import Counter.Main as Counter
 import Bubbling.Main as Bubbling
+import Counter.Main as Counter
+import Glue exposing (Glue)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onCheck, onClick)
 import Subscriptions.Main as Subscriptions
+import Browser
 
 
 counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
@@ -96,12 +96,6 @@ type Msg
     | IncrementSelected
 
 
-(=>) : a -> b -> ( a, b )
-(=>) =
-    (,)
-infixl 0 =>
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -118,14 +112,16 @@ update msg model =
                 |> Glue.update subscriptions subscriptionsMsg
 
         SelectCounter selected ->
-            { model | selectedCounter = selected } => Cmd.none
+            ( { model | selectedCounter = selected }, Cmd.none )
 
         IncrementSelected ->
             case model.selectedCounter of
                 First ->
-                    model
-                        |> Glue.updateWith counter Counter.increment
-                        => Cmd.none
+                    ( model
+                        |> Glue.updateWith counter
+                            Counter.increment
+                    , Cmd.none
+                    )
 
                 Second ->
                     ( model, Cmd.none )
@@ -138,76 +134,72 @@ countersControlView model =
         radiosName =
             name "selected-input"
     in
-        div []
-            [ text "Update Selected counter:"
+    div []
+        [ text "Update Selected counter:"
+        , div []
+            [ label []
+                [ text "First counter"
+                , input
+                    [ type_ "radio"
+                    , radiosName
+                    , checked <| model.selectedCounter == First
+                    , onCheck <| \_ -> SelectCounter First
+                    ]
+                    []
+                ]
+            , br [] []
+            , label []
+                [ text "Second counter"
+                , input
+                    [ type_ "radio"
+                    , radiosName
+                    , checked <| model.selectedCounter == Second
+                    , onCheck <| \_ -> SelectCounter Second
+                    ]
+                    []
+                ]
             , div []
-                [ label []
-                    [ text "First counter"
-                    , input
-                        [ type_ "radio"
-                        , radiosName
-                        , checked <| model.selectedCounter == First
-                        , onCheck <| \_ -> SelectCounter First
-                        ]
-                        []
-                    ]
-                , br [] []
-                , label []
-                    [ text "Second counter"
-                    , input
-                        [ type_ "radio"
-                        , radiosName
-                        , checked <| model.selectedCounter == Second
-                        , onCheck <| \_ -> SelectCounter Second
-                        ]
-                        []
-                    ]
-                , div []
-                    [ button [ onClick IncrementSelected ]
-                        [ text "increment selected" ]
-                    ]
+                [ button [ onClick IncrementSelected ]
+                    [ text "increment selected" ]
                 ]
             ]
+        ]
 
 
 view : Model -> Html Msg
 view model =
     let
         line =
-            hr [ style [ ( "border", "1px solid rgb(209, 230, 236)" ) ] ]
+            hr [ style "border" "1px solid rgb(209, 230, 236)" ]
                 []
     in
-        div
-            [ style
-                [ ( "background", "rgb(209, 230, 236)" )
-                , ( "position", "absolute" )
-                , ( "width", "100%" )
-                , ( "height", "100%" )
-                , ( "padding", "15% 0" )
-                , ( "font-family", "Helvetica, Arial, sans-serif" )
-                ]
+    div
+        [ style "background" "rgb(209, 230, 236)"
+        , style "position" "absolute"
+        , style "width" "100%"
+        , style "height" "100%"
+        , style "padding" "15% 0"
+        , style "font-family" "Helvetica, Arial, sans-serif"
+        ]
+        [ main_
+            [ style "text-align" "center"
+            , style "width" "300px"
+            , style "line-height" "2em"
+            , style "margin" "0 auto"
+            , style "padding" "20px 12px"
+            , style "background" "white"
+            , style "box-shadow" "0px 2px 4px rgba(0,0,0,.2)"
+            , style "border-radius" "3px"
             ]
-            [ main_
-                [ style
-                    [ ( "text-align", "center" )
-                    , ( "width", "300px" )
-                    , ( "line-height", "2em" )
-                    , ( "margin", "0 auto" )
-                    , ( "padding", "20px 12px" )
-                    , ( "background", "white" )
-                    , ( "box-shadow", "0px 2px 4px rgba(0,0,0,.2)" )
-                    , ( "border-radius", "3px" )
-                    ]
-                ]
-                [ Glue.view counter Counter.view model
-                , line
-                , Glue.view bubbling Bubbling.view model
-                , line
-                , countersControlView model
-                , line
-                , Glue.view subscriptions Subscriptions.view model
-                ]
+            [ Glue.view counter Counter.view model
+            , line
+            , Glue.view bubbling Bubbling.view model
+            , line
+            , countersControlView model
+            , line
+            , Glue.view subscriptions Subscriptions.view model
             ]
+        ]
 
 
 
@@ -226,10 +218,10 @@ subscriptions_ =
 -- Main
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions_

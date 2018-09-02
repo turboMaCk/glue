@@ -1,23 +1,19 @@
-module Subscriptions.Main exposing (Model, Msg, init, update, view, subscriptions)
+module Subscriptions.Main exposing (Model, Msg, init, subscriptions, update, view)
 
 {-| This is example of slightly bit more complex management of subscriptions
 between parent and child.
 -}
 
+-- import Browser exposing (Position)
+
+import Browser
+import Browser.Events
+import Glue exposing (Glue)
 import Html exposing (Html)
 import Html.Attributes as HtmlA
 import Html.Events exposing (onCheck)
-import Mouse exposing (Position)
-
-
--- Library
-
-import Glue exposing (Glue)
-
-
--- Submodules
-
-import Subscriptions.Moves as Moves
+import Json.Decode as Decode
+import Subscriptions.Moves as Moves exposing (Position)
 
 
 moves : Glue Model Moves.Model Msg Moves.Msg Moves.Msg
@@ -38,14 +34,14 @@ moves =
 
 subscriptions : Model -> Sub Msg
 subscriptions =
-    (\_ -> Mouse.clicks Clicked)
+    (\_ -> Browser.Events.onClick <| Decode.map Clicked Moves.positionDecoder)
         |> Glue.subscriptionsWhen .movesOn moves
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
-        { init = init
+    Browser.element
+        { init = always init
         , update = update
         , view = view
         , subscriptions = subscriptions
@@ -74,7 +70,7 @@ init =
 
 
 type Msg
-    = Clicked Position
+    = Clicked { x : Int, y : Int }
     | MovesMsg Moves.Msg
     | ToggleMoves Bool
 
@@ -100,8 +96,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     Html.div []
-        [ Html.text <| "Clicks: " ++ (toString model.clicks)
-        , Html.label [ HtmlA.style [ ( "display", "block" ) ] ]
+        [ Html.text <| "Clicks: " ++ String.fromInt model.clicks
+        , Html.label [ HtmlA.style "display" "block" ]
             [ Html.text "subscribe to mouse moves"
             , Html.input
                 [ onCheck ToggleMoves
