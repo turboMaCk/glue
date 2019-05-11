@@ -1,37 +1,61 @@
 module Glue exposing
     ( Glue
-    , simple, poly, glue
-    , init, update, view, subscriptions, subscriptionsWhen
-    , updateWith, trigger, updateWithTrigger
+    , glue, poly
+    , init
+    , update, updateModel, updateWithTrigger, trigger
+    , subscriptions, subscriptionsWhen
+    , view
     , map
     )
 
 {-| Composing Elm applications from smaller isolated parts (modules).
-You can think about this as about lightweight abstraction built around `(model, Cmd msg)` pair
-that reduces boilerplate required for composing `init` `update` `view` and `subscribe` using
+You can think about this as about lightweight abstraction built around `(model, Cmd msg)` or
+`(model, Sub msg)` pairs repetition of in code for composing `init` `update` `view` and `subscribe` using
 [`Cmd.map`](https://package.elm-lang.org/packages/elm/core/latest/Platform-Cmd#map),
 [`Sub.map`](https://package.elm-lang.org/packages/elm/core/latest/Platform-Sub#map)
 and [`Html.map`](https://package.elm-lang.org/packages/elm/html/latest/Html#map).
 
+It's recommended to avoid usage of pattern with statefull modules unless there is clear benefit to choose it.
+In cases where one would like to use `Cmd.map` pattern anyway though,
+Glue can be used to avoid repetable patterns for mapping the msg types
+and updating models.
 
-# Datatype Definition
+
+# Datatype
 
 @docs Glue
 
 
 # Constructors
 
-@docs simple, poly, glue
+@docs glue, poly
 
 
-# Basics
+# Init
 
-@docs init, update, view, subscriptions, subscriptionsWhen
+Designed for chaining initialization of child modules
+from parent init function.
+
+@docs init
 
 
-# Custom Operations
+# Updates
 
-@docs updateWith, trigger, updateWithTrigger
+There are 4 versions of functions used to work with model
+updates and commands between modules each useful in
+a different situation.
+
+@docs update, updateModel, updateWithTrigger, trigger
+
+
+# Subscriptions
+
+@docs subscriptions, subscriptionsWhen
+
+
+# View
+
+@docs view
 
 
 # Helpers
@@ -43,112 +67,56 @@ and [`Html.map`](https://package.elm-lang.org/packages/elm/html/latest/Html#map)
 import Html exposing (Html)
 
 
-{-| `Glue` defines interface mappings between parent and child module.
+{-| `Glue` describes an interface between parent and child module.
 
-You can create `Glue` with the [`simple`](#simple), [`poly`](#poly) or [`glue`](#glue) function constructor in case of non-standard APIs.
-Every glue layer is defined in terms of `Model`, `[Submodule].Model` `Msg`, `[Submodule].Msg` and `a`.
+You can create `Glue` with the [`glue`](#glue) or [`poly`](#poly) function constructor.
+Every glue layer is parametrized over:
 
   - `model` is `Model` of parent
   - `subModel` is `Model` of child
   - `msg` is `Msg` of parent
   - `subMsg` is `Msg` of child
-  - `a` is type of `Msg` child's views return in `Html a`. Usually it's either `msg` or `subMsg`.
 
 -}
-type Glue model subModel msg subMsg a
+type Glue model subModel msg subMsg
     = Glue
-        { msg : a -> msg
+        { msg : subMsg -> msg
         , get : model -> subModel
         , set : subModel -> model -> model
-        , init : () -> ( subModel, Cmd msg )
-        , update : subMsg -> model -> ( subModel, Cmd msg )
-        , subscriptions : model -> Sub msg
         }
 
 
 {-| Simple [`Glue`](#Glue) constructor.
-
-Generally useful for composing independent TEA modules together.
-If your module's API is polymorphic use [`poly`](#poly) constructor instead.
-
 -}
-simple :
+glue :
     { msg : subMsg -> msg
     , get : model -> subModel
     , set : subModel -> model -> model
-    , init : () -> ( subModel, Cmd subMsg )
-    , update : subMsg -> subModel -> ( subModel, Cmd subMsg )
-    , subscriptions : subModel -> Sub subMsg
     }
-    -> Glue model subModel msg subMsg subMsg
-simple rec =
-    Glue
-        { msg = rec.msg
-        , get = rec.get
-        , set = rec.set
-        , init = map rec.msg << rec.init
-        , update =
-            \subMsg model ->
-                rec.get model
-                    |> rec.update subMsg
-                    |> map rec.msg
-        , subscriptions =
-            \model ->
-                rec.get model
-                    |> rec.subscriptions
-                    |> Sub.map rec.msg
-        }
+    -> Glue model subModel msg subMsg
+glue rec =
+    Glue rec
 
 
-{-| Polymorphic [`Glue`](#Glue) constructor.
+{-| Sepcialized version of constructor.
+Useful when module's api has generic `msg` type
+and maps command internally.
 
-Useful when module's api has generic `msg` type. Module can also perform action bubbling to parent.
+This constructor simply aliases `msg` to `identity`
+function.
 
 -}
 poly :
     { get : model -> subModel
     , set : subModel -> model -> model
-    , init : () -> ( subModel, Cmd msg )
-    , update : subMsg -> subModel -> ( subModel, Cmd msg )
-    , subscriptions : subModel -> Sub msg
     }
-    -> Glue model subModel msg subMsg msg
+    -> Glue model subModel msg msg
 poly rec =
     Glue
         { msg = identity
         , get = rec.get
         , set = rec.set
-        , init = rec.init
-        , update =
-            \subMsg model ->
-                rec.get model
-                    |> rec.update subMsg
-        , subscriptions =
-            \model ->
-                rec.get model
-                    |> rec.subscriptions
         }
-
-
-{-| Low level [Glue](#Glue) constructor.
-
-Useful when you can't use either [`simple`](#simple) or [`poly`](#poly).
-This can be caused by nonstandard API where one of the functions uses generic `msg` and other `SubModule.Msg`.
-
-_Always use this constructor as your last option for constructing [`Glue`](#Glue)._
-
--}
-glue :
-    { msg : a -> msg
-    , get : model -> subModel
-    , set : subModel -> model -> model
-    , init : () -> ( subModel, Cmd msg )
-    , update : subMsg -> model -> ( subModel, Cmd msg )
-    , subscriptions : model -> Sub msg
-    }
-    -> Glue model subModel msg subMsg a
-glue =
-    Glue
 
 
 
@@ -166,130 +134,76 @@ glue =
     init : ( Model, Cmd msg )
     init =
         ( Model "", Cmd.none )
-            |> Glue.init firstCounter
-            |> Glue.init secondCounter
+            |> Glue.init firstCounter Counter.init
+            |> Glue.init secondCounter Counter.init
 
 -}
-init : Glue model subModel msg subMsg a -> ( subModel -> b, Cmd msg ) -> ( b, Cmd msg )
-init (Glue rec) ( fc, cmd ) =
-    let
-        ( subModel, subCmd ) =
-            rec.init ()
-    in
-    ( fc subModel, Cmd.batch [ cmd, subCmd ] )
+init : Glue model subModel msg subMsg -> ( subModel, Cmd subMsg ) -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
+init (Glue { msg }) ( subModel, subCmd ) ( fc, cmd ) =
+    ( fc subModel, Cmd.batch [ cmd, Cmd.map msg subCmd ] )
 
 
-{-| Update submodule's state using its `update` function.
+{-| Call submodule update with given message.
+Useful for nesting update calls.
 
-    type Msg
-        = CounterMsg Counter.Msg
+    -- Child module
+    updateCounter : Counter.Msg -> Counter.Model -> ( Counter.Model, Cmd Counter.Msg )
+    updateCounter msg model =
+        case msg of
+            Increment ->
+                ( model + 1, Cmd.none )
 
+    -- Parent module
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         case msg of
             CounterMsg counterMsg ->
                 ( { model | message = "Counter has changed" }, Cmd.none )
-                    |> Glue.update counter counterMsg
+                    |> Glue.update counter Counter.update counterMsg
 
 -}
-update : Glue model subModel msg subMsg a -> subMsg -> ( model, Cmd msg ) -> ( model, Cmd msg )
-update (Glue rec) subMsg ( m, cmd ) =
+update : Glue model subModel msg subMsg -> (a -> subModel -> ( subModel, Cmd subMsg )) -> a -> ( model, Cmd msg ) -> ( model, Cmd msg )
+update (Glue rec) fc msg ( model, cmd ) =
     let
         ( subModel, subCmd ) =
-            rec.update subMsg m
+            fc msg <| rec.get model
     in
-    ( rec.set subModel m, Cmd.batch [ subCmd, cmd ] )
+    ( rec.set subModel model, Cmd.batch [ Cmd.map rec.msg subCmd, cmd ] )
 
 
-{-| Render submodule's view.
+{-| Update child module by given function.
 
-    view : Model -> Html msg
-    view model =
-        Html.div []
-            [ Html.text model.message
-            , Glue.view counter Counter.view model
-            ]
-
--}
-view : Glue model subModel msg subMsg a -> (subModel -> Html a) -> model -> Html msg
-view (Glue rec) v =
-    Html.map rec.msg << v << rec.get
-
-
-{-| Subscribe to subscriptions defined in submodule.
-
-    subscriptions : Model -> Sub Msg
-    subscriptions =
-        (\model -> Mouse.clicks Clicked)
-            |> Glue.subscriptions subModule
-            |> Glue.subscriptions anotherNestedModule
-
--}
-subscriptions : Glue model subModel msg subMsg a -> (model -> Sub msg) -> (model -> Sub msg)
-subscriptions (Glue rec) mainSubscriptions =
-    \model -> Sub.batch [ mainSubscriptions model, rec.subscriptions model ]
-
-
-{-| Subscribe to subscriptions when model is in some state.
-
-    type alias Model =
-        { subModuleSubsOn : Bool
-        , subModuleModel : SubModule.Model
-        }
-
-    subscriptions : Model -> Sub Msg
-    subscriptions =
-        (\_ -> Mouse.clicks Clicked)
-            |> Glue.subscriptionsWhen .subModuleSubOn subModule
-
--}
-subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg a -> (model -> Sub msg) -> (model -> Sub msg)
-subscriptionsWhen cond g sub model =
-    if cond model then
-        subscriptions g sub model
-
-    else
-        sub model
-
-
-
--- Custom Operations
-
-
-{-| Use child's exposed function to update it's model
-
+    -- Child module
     incrementBy : Int -> Counter.Model -> Counter.Model
     incrementBy num model =
         model + num
 
+    -- Parent module
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         case msg of
             IncrementBy10 ->
-                ( model
-                    |> Glue.updateWith counter (incrementBy 10)
+                ( Glue.updateModel counter (incrementBy 10) model
                 , Cmd.none
                 )
 
 -}
-updateWith : Glue model subModel msg subMsg a -> (subModel -> subModel) -> model -> model
-updateWith (Glue rec) fc model =
-    let
-        subModel =
-            fc <| rec.get model
-    in
-    rec.set subModel model
+updateModel : Glue model subModel msg subMsg -> (subModel -> subModel) -> model -> model
+updateModel (Glue rec) fc model =
+    rec.set (fc <| rec.get model) model
 
 
 {-| Trigger Cmd in by child's function
 
 _Commands are async. Therefore trigger doesn't make any update directly.
-Use [`updateWith`](#updateWith) over `trigger` when you can._
+Use [`updateModel`](#updateModel) over `trigger` when you can._
 
-    triggerIncrement : Counter.Model -> Cmd Counter.Msg
-    triggerIncrement _ ->
-        Task.perform identity <| Task.succeed Counter.Increment
+    -- Child module
+    triggerEmit : Counter.Model -> Cmd Counter.Msg
+    triggerEmit model ->
+        Task.perform identity <| Task.succeed <| Counter.Emit model
 
+    -- Parent module
     update : Msg -> Model -> ( Model, Cmd Msg )
     update msg model =
         case msg of
@@ -298,12 +212,12 @@ Use [`updateWith`](#updateWith) over `trigger` when you can._
                     |> Glue.trigger counter triggerIncrement
 
 -}
-trigger : Glue model subModel msg subMsg a -> (subModel -> Cmd a) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+trigger : Glue model subModel msg subMsg -> (subModel -> Cmd subMsg) -> ( model, Cmd msg ) -> ( model, Cmd msg )
 trigger (Glue rec) fc ( model, cmd ) =
     ( model, Cmd.batch [ Cmd.map rec.msg <| fc <| rec.get model, cmd ] )
 
 
-{-| Similar to [`update`](#update) but using custom function.
+{-| Update child module using functin that also produces `Cmd`.
 
     increment : Counter.Model -> ( Counter.Model, Cmd Counter.Msg )
     increment model =
@@ -317,7 +231,7 @@ trigger (Glue rec) fc ( model, cmd ) =
                     |> Glue.updateWithTrigger counter increment
 
 -}
-updateWithTrigger : Glue model subModel msg subMsg a -> (subModel -> ( subModel, Cmd a )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+updateWithTrigger : Glue model subModel msg subMsg -> (subModel -> ( subModel, Cmd subMsg )) -> ( model, Cmd msg ) -> ( model, Cmd msg )
 updateWithTrigger (Glue rec) fc ( model, cmd ) =
     let
         ( subModel, subCmd ) =
@@ -326,39 +240,68 @@ updateWithTrigger (Glue rec) fc ( model, cmd ) =
     ( rec.set subModel model, Cmd.batch [ Cmd.map rec.msg subCmd, cmd ] )
 
 
+{-| Subscribe to subscriptions defined in submodule.
+
+    subscriptions : Model -> Sub Msg
+    subscriptions =
+        (\model -> Mouse.clicks Clicked)
+            |> Glue.subscriptions foo Foo.subscriptions
+            |> Glue.subscriptions bar Bar.subscriptions
+
+-}
+subscriptions : Glue model subModel msg subMsg -> (subModel -> Sub subMsg) -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptions (Glue { msg, get }) subscriptions_ mainSubscriptions =
+    \model ->
+        Sub.batch
+            [ mainSubscriptions model
+            , Sub.map msg <| subscriptions_ <| get model
+            ]
+
+
+{-| Subscribe to subscriptions when model is in some state.
+
+    type alias Model =
+        { subModuleSubsOn : Bool
+        , subModuleModel : SubModule.Model
+        }
+
+    subscriptions : Model -> Sub Msg
+    subscriptions =
+        (\_ -> Mouse.clicks Clicked)
+            |> Glue.subscriptionsWhen .subModuleSubOn subModule SubModule.subscriptions
+
+-}
+subscriptionsWhen : (model -> Bool) -> Glue model subModel msg subMsg -> (subModel -> Sub subMsg) -> (model -> Sub msg) -> (model -> Sub msg)
+subscriptionsWhen cond g subscriptions_ mainSubscriptions model =
+    if cond model then
+        subscriptions g subscriptions_ mainSubscriptions model
+
+    else
+        mainSubscriptions model
+
+
+{-| Render submodule's view.
+
+    view : Model -> Html msg
+    view model =
+        Html.div []
+            [ Html.text model.message
+            , Glue.view counter Counter.view model
+            ]
+
+-}
+view : Glue model subModel msg subMsg -> (subModel -> Html subMsg) -> model -> Html msg
+view (Glue rec) v model =
+    Html.map rec.msg <| v <| rec.get model
+
+
 
 -- Helpers
 
 
 {-| Tiny abstraction over [`Cmd.map`](https://package.elm-lang.org/packages/elm/core/latest/Platform-Cmd#map)
-packed in `(model, Cmd msg)` pair that helps you to reduce boilerplate while turning generic TEA app to [`Glue`](#Glue) using [`glue`](#glue) constructor.
-
-This function is generally useful for turning update and init functions in [`Glue`](#glue) definition.
-
-    type alias Model =
-        { message : String
-        , counter : Counter.Model
-        }
-
-    type Msg
-        = CounterMsg Counter.Msg
-
-    -- this works like `simple` constructor
-    counter : Glue Model Counter.Model Msg Counter.Msg
-    counter =
-        Glue.glue
-            { msg = CounterMsg
-            , get = .counterModel
-            , set = \subModel model -> { model | counterModel = subModel }
-            , init = \_ -> Counter.init |> Glue.map CounterMsg
-            , update =
-                \subMsg model ->
-                    Counter.update subMsg model.counterModel
-                        |> Glue.map CounterMsg
-            , subscriptions = \_ -> Sub.none
-            }
-
+packed in `(model, Cmd msg)`.
 -}
 map : (subMsg -> msg) -> ( subModel, Cmd subMsg ) -> ( subModel, Cmd msg )
-map constructor ( subModel, subCmd ) =
-    ( subModel, Cmd.map constructor subCmd )
+map constructor pair =
+    Tuple.mapSecond (Cmd.map constructor) pair

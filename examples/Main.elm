@@ -23,39 +23,30 @@ import Html.Events exposing (onCheck, onClick)
 import Subscriptions.Main as Subscriptions
 
 
-counter : Glue Model Counter.Model Msg Counter.Msg Counter.Msg
+counter : Glue Model Counter.Model Msg Counter.Msg
 counter =
-    Glue.simple
+    Glue.glue
         { msg = CounterMsg
         , get = .counterModel
         , set = \sm m -> { m | counterModel = sm }
-        , init = \_ -> Counter.init
-        , update = Counter.update
-        , subscriptions = Counter.subscriptions
         }
 
 
-bubbling : Glue Model Bubbling.Model Msg Bubbling.Msg Bubbling.Msg
+bubbling : Glue Model Bubbling.Model Msg Bubbling.Msg
 bubbling =
-    Glue.simple
+    Glue.glue
         { msg = BubblingMsg
         , get = .bubblingModel
         , set = \sm m -> { m | bubblingModel = sm }
-        , init = \_ -> Bubbling.init
-        , update = Bubbling.update
-        , subscriptions = Bubbling.subscriptions
         }
 
 
-subscriptions : Glue Model Subscriptions.Model Msg Subscriptions.Msg Subscriptions.Msg
+subscriptions : Glue Model Subscriptions.Model Msg Subscriptions.Msg
 subscriptions =
-    Glue.simple
+    Glue.glue
         { msg = SubscriptionsMsg
         , get = .subscriptionsModel
         , set = \sm m -> { m | subscriptionsModel = sm }
-        , init = \_ -> Subscriptions.init
-        , update = Subscriptions.update
-        , subscriptions = Subscriptions.subscriptions
         }
 
 
@@ -79,9 +70,9 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( Model First, Cmd.none )
-        |> Glue.init counter
-        |> Glue.init bubbling
-        |> Glue.init subscriptions
+        |> Glue.init counter Counter.init
+        |> Glue.init bubbling Bubbling.init
+        |> Glue.init subscriptions Subscriptions.init
 
 
 
@@ -101,15 +92,15 @@ update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( model, Cmd.none )
-                |> Glue.update counter counterMsg
+                |> Glue.update counter Counter.update counterMsg
 
         BubblingMsg bubblingMsg ->
             ( model, Cmd.none )
-                |> Glue.update bubbling bubblingMsg
+                |> Glue.update bubbling Bubbling.update bubblingMsg
 
         SubscriptionsMsg subscriptionsMsg ->
             ( model, Cmd.none )
-                |> Glue.update subscriptions subscriptionsMsg
+                |> Glue.update subscriptions Subscriptions.update subscriptionsMsg
 
         SelectCounter selected ->
             ( { model | selectedCounter = selected }, Cmd.none )
@@ -117,9 +108,7 @@ update msg model =
         IncrementSelected ->
             case model.selectedCounter of
                 First ->
-                    ( model
-                        |> Glue.updateWith counter
-                            Counter.increment
+                    ( Glue.updateModel counter Counter.increment model
                     , Cmd.none
                     )
 
@@ -209,9 +198,9 @@ view model =
 subscriptions_ : Model -> Sub Msg
 subscriptions_ =
     (\model -> Sub.none)
-        |> Glue.subscriptions counter
-        |> Glue.subscriptions bubbling
-        |> Glue.subscriptions subscriptions
+        |> Glue.subscriptions counter Counter.subscriptions
+        |> Glue.subscriptions bubbling Bubbling.subscriptions
+        |> Glue.subscriptions subscriptions Subscriptions.subscriptions
 
 
 
