@@ -38,6 +38,7 @@ The goals and features of this package are:
 - Reduce code flow indirection in glueing between parent and child module.
 - Define glueing logic in cosumer module.
 - Enforce common interface in `init` `update` `subscribe` and `view`.
+- Makes updates of nested models composable
 - *You should read the whole README anyway.*
 
 ## Install
