@@ -68,8 +68,7 @@ type alias Model =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model First
-        |> Glue.initModel counter Counter.init
+    ( Model First Counter.init
     , Cmd.none
     )
         |> Glue.init bubbling Bubbling.init

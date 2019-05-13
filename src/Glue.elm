@@ -1,7 +1,7 @@
 module Glue exposing
     ( Glue
     , glue, simple, poly
-    , init, initModel
+    , init
     , update, updateModel, updateWithTrigger, updateModelWith, trigger
     , subscriptions, subscriptionsWhen
     , view, viewSimple
@@ -36,7 +36,7 @@ and updating models.
 Designed for chaining initialization of child modules
 from parent init function.
 
-@docs init, initModel
+@docs init
 
 
 # Updates
@@ -162,27 +162,6 @@ poly rec =
 init : Glue model subModel msg subMsg -> ( subModel, Cmd subMsg ) -> ( subModel -> a, Cmd msg ) -> ( a, Cmd msg )
 init (Glue { msg }) ( subModel, subCmd ) ( fc, cmd ) =
     ( fc subModel, Cmd.batch [ cmd, Cmd.map msg subCmd ] )
-
-
-{-| Initialize child module in parent for cases when init
-doesn't produce Cmd.
-
-    type alias Model =
-        { message : String
-        , firstCounterModel : Counter.Model
-        , secondCounterModel : Counter.Model
-        }
-
-    init : Model
-    init =
-        Model ""
-            |> Glue.initModel firstCounter Counter.init
-            |> Glue.initModel secondCounter Counter.init
-
--}
-initModel : Glue model subModel msg subMsg -> subModel -> (subModel -> a) -> a
-initModel (Glue { msg }) subModel fc =
-    fc subModel
 
 
 {-| Call child module update with given message.

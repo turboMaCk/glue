@@ -55,8 +55,9 @@ type alias Model =
 
 init : Model
 init =
-    Model "Let's change the counter!"
-        |> Glue.initModel counter Counter.init
+    { message = "Let's change the counter!"
+    , counter = Counter.init
+    }
 
 
 
