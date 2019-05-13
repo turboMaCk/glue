@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/turboMaCk/glue.svg?branch=master)](https://travis-ci.org/turboMaCk/glue)
 
 This package helps you reduce boilerplate when composing TEA-based (The Elm Architecture) applications using
-[`Cmd.map`][cmd-map], [`Sub.map`][sub-map] and [`Html.map`][html-map].
+`Cmd.map`, `Sub.map` and `Html.map`.
 `Glue` is just a thin abstraction over these functions so it's easy to plug it in and out.
 It's fair to say that `Glue` is an alternative to [elm-parts](http://package.elm-lang.org/packages/debois/elm-parts/latest),
 but uses a different approach (no better or worse) for composing isolated pieces/modules together.
@@ -159,8 +159,8 @@ To simplify glueing of things together, the `Glue` type is introduced by this pa
 This is simply just a name-space for pure functions that defines interface between modules to which you can then refer by single name.
 Other functions within the `Glue` package use the `Glue.Glue` type as proxy to access these functions.
 
-*Note that Glue has essentialy 2 parts. The first one is super simple Lens for model updates.
-The second is writter of for effects (Cmds, Subscriptions).*
+> Note that Glue has essentialy 2 parts. The first one is super simple Lens for model updates.
+> The second is writter of for effects (Cmds, Subscriptions).
 
 ### Glueing independent TEA App
 
@@ -216,6 +216,10 @@ view =
 As you can see we're using just `Glue.init`, `Glue.update` and `Glue.view` in these functions to wire child module.
 Also compare to original TEA example we can easily update parent Model an generate additional parent Cmd as well.
 
+> This version of counter is using `Browser.element` type of interface as oppose to
+> `Browser.sandbox`. It is possible to use `Glue` with `sandbox` type of interface.
+> See the [counter example](examples/Counter) and `Glue.simple` constructor.
+
 ### Wrap Polymorphic Module
 
 We're going to be using term "polymorphics" just because of the lack of better name.
@@ -246,9 +250,8 @@ view msg model =
             ]
 ```
 
-**Note:**
-*As you can see `view` is now taking an extra argument - function from `Msg` to parent's `msg`.
-In practice it's usually a good to use record with functions called `Config msg` which will be much more extensible.*
+> As you can see `view` is now taking an extra argument - function from `Msg` to parent's `msg`.
+> In practice it's usually a good to use record with functions called `Config msg` which will be much more extensible.*
 
 Now we need to change `Glue` type definition in parent module to reflect the new API of `Counter`:
 

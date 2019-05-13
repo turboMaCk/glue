@@ -1,10 +1,10 @@
 module Glue exposing
     ( Glue
-    , glue, poly
-    , init
-    , update, updateModel, updateWithTrigger, trigger
+    , glue, simple, poly
+    , init, initModel
+    , update, updateModel, updateWithTrigger, updateModelWith, trigger
     , subscriptions, subscriptionsWhen
-    , view
+    , view, viewSimple
     , map
     )
 
@@ -28,7 +28,7 @@ and updating models.
 
 # Constructors
 
-@docs glue, poly
+@docs glue, simple, poly
 
 
 # Init
@@ -36,7 +36,7 @@ and updating models.
 Designed for chaining initialization of child modules
 from parent init function.
 
-@docs init
+@docs init, initModel
 
 
 # Updates
@@ -45,7 +45,7 @@ There are 4 versions of functions used to work with model
 updates and commands between modules each useful in
 a different situation.
 
-@docs update, updateModel, updateWithTrigger, trigger
+@docs update, updateModel, updateWithTrigger, updateModelWith, trigger
 
 
 # Subscriptions
@@ -55,7 +55,7 @@ a different situation.
 
 # View
 
-@docs view
+@docs view, viewSimple
 
 
 # Helpers
@@ -86,7 +86,7 @@ type Glue model subModel msg subMsg
         }
 
 
-{-| Simple [`Glue`](#Glue) constructor.
+{-| General [`Glue`](#Glue) constructor.
 -}
 glue :
     { msg : subMsg -> msg
@@ -96,6 +96,27 @@ glue :
     -> Glue model subModel msg subMsg
 glue rec =
     Glue rec
+
+
+{-| Simple [`Glue`](#Glue) constructor
+for modules that don't produce Cmds.
+
+**Note that with this constructor you won't
+be able to use some function provided
+within this model.**
+
+-}
+simple :
+    { get : model -> subModel
+    , set : subModel -> model -> model
+    }
+    -> Glue model subModel Never Never
+simple rec =
+    Glue
+        { msg = Basics.never
+        , get = rec.get
+        , set = rec.set
+        }
 
 
 {-| Sepcialized version of constructor.
@@ -143,7 +164,28 @@ init (Glue { msg }) ( subModel, subCmd ) ( fc, cmd ) =
     ( fc subModel, Cmd.batch [ cmd, Cmd.map msg subCmd ] )
 
 
-{-| Call submodule update with given message.
+{-| Initialize child module in parent for cases when init
+doesn't produce Cmd.
+
+    type alias Model =
+        { message : String
+        , firstCounterModel : Counter.Model
+        , secondCounterModel : Counter.Model
+        }
+
+    init : Model
+    init =
+        Model ""
+            |> Glue.initModel firstCounter Counter.init
+            |> Glue.initModel secondCounter Counter.init
+
+-}
+initModel : Glue model subModel msg subMsg -> subModel -> (subModel -> a) -> a
+initModel (Glue { msg }) subModel fc =
+    fc subModel
+
+
+{-| Call child module update with given message.
 Useful for nesting update calls.
 
     -- Child module
@@ -159,7 +201,7 @@ Useful for nesting update calls.
         case msg of
             CounterMsg counterMsg ->
                 ( { model | message = "Counter has changed" }, Cmd.none )
-                    |> Glue.update counter Counter.update counterMsg
+                    |> Glue.update counter updateCounter counterMsg
 
 -}
 update : Glue model subModel msg subMsg -> (a -> subModel -> ( subModel, Cmd subMsg )) -> a -> ( model, Cmd msg ) -> ( model, Cmd msg )
@@ -171,26 +213,26 @@ update (Glue rec) fc msg ( model, cmd ) =
     ( rec.set subModel model, Cmd.batch [ Cmd.map rec.msg subCmd, cmd ] )
 
 
-{-| Update child module by given function.
+{-| Call child module update for cases when submodule doesn't produce Cmd.
 
     -- Child module
-    incrementBy : Int -> Counter.Model -> Counter.Model
-    incrementBy num model =
-        model + num
+    updateCounter : Counter.Msg -> Counter.Model -> Counter.Model
+    updateCounter msg model =
+        case msg of
+            Increment ->
+                model + 1
 
     -- Parent module
-    update : Msg -> Model -> ( Model, Cmd Msg )
+    update : Msg -> Model -> Model
     update msg model =
         case msg of
-            IncrementBy10 ->
-                ( Glue.updateModel counter (incrementBy 10) model
-                , Cmd.none
-                )
+            CounterMsg counterMsg ->
+                Glue.updateModel counter updateCounter counterMsg model
 
 -}
-updateModel : Glue model subModel msg subMsg -> (subModel -> subModel) -> model -> model
-updateModel (Glue rec) fc model =
-    rec.set (fc <| rec.get model) model
+updateModel : Glue model subModel msg subMsg -> (a -> subModel -> subModel) -> a -> model -> model
+updateModel (Glue rec) fc msg model =
+    rec.set (fc msg <| rec.get model) model
 
 
 {-| Trigger Cmd in by child's function
@@ -238,6 +280,26 @@ updateWithTrigger (Glue rec) fc ( model, cmd ) =
             fc <| rec.get model
     in
     ( rec.set subModel model, Cmd.batch [ Cmd.map rec.msg subCmd, cmd ] )
+
+
+{-| Call child module function to update its model.
+
+    -- Child module
+    incrementBy : Int -> Counter.Model -> Counter.Model
+    incrementBy num model =
+        model + num
+
+    -- Parent module
+    update : Msg -> Model -> Model
+    update msg model =
+        case msg of
+            IncrementBy10 ->
+                Glue.updateModelWith counter (incrementBy 10) model
+
+-}
+updateModelWith : Glue model subModel msg subMsg -> (subModel -> subModel) -> model -> model
+updateModelWith (Glue rec) fc model =
+    rec.set (fc <| rec.get model) model
 
 
 {-| Subscribe to subscriptions defined in submodule.
@@ -293,6 +355,17 @@ subscriptionsWhen cond g subscriptions_ mainSubscriptions model =
 view : Glue model subModel msg subMsg -> (subModel -> Html subMsg) -> model -> Html msg
 view (Glue rec) v model =
     Html.map rec.msg <| v <| rec.get model
+
+
+{-| View `Glue` constructed with [`simple`](#simple) constructor.
+
+Because Msg is not part of the glue definition (Never type) it needs
+to be passed in as a argument
+
+-}
+viewSimple : Glue model subModel Never Never -> (subModel -> Html subMsg) -> (subMsg -> msg) -> model -> Html msg
+viewSimple (Glue rec) v msg model =
+    Html.map msg <| v <| rec.get model
 
 
 
