@@ -396,7 +396,7 @@ update msg model =
     case msg of
         CounterMsg counterMsg ->
             ( model , Cmd.none )
-                |> Glue.update counter counterMsg (Counter.update CountChanged)
+                |> Glue.update counter (Counter.update CountChanged) counterMsg
 
         CountChanged num ->
             if num > model.max then
