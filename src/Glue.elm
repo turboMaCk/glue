@@ -41,7 +41,7 @@ Designed for chaining initialization of child modules from parent `init` functio
 
 # Updates
 
-@docs update, updateModel, updateWith, updateModelWith
+@docs update, updateModel, updateWith, updateModelWith, trigger
 
 
 # Subscriptions
