@@ -6,6 +6,7 @@ module Glue exposing
     , subscriptions, subscriptionsWhen
     , view, viewSimple
     , map
+    , trigger
     )
 
 {-| Composing Elm applications from smaller isolated parts (modules).
@@ -264,6 +265,29 @@ updateModelWith (Glue rec) fc model =
     rec.set (fc <| rec.get model) model
 
 
+{-| Trigger Cmd in child's function
+_Commands are async. Therefore trigger doesn't make any update directly.
+Use [`updateModel`](#updateModel) over `trigger` when you can._
+
+    -- Child module
+    triggerEmit : Counter.Model -> Cmd Counter.Msg
+    triggerEmit model ->
+        Task.perform identity <| Task.succeed <| Counter.Emit model
+
+    -- Parent module
+    update : Msg -> Model -> ( Model, Cmd Msg )
+    update msg model =
+        case msg of
+            IncrementCounter ->
+                ( model, Cmd.none )
+                    |> Glue.trigger counter triggerIncrement
+
+-}
+trigger : Glue model subModel msg subMsg -> (subModel -> Cmd subMsg) -> ( model, Cmd msg ) -> ( model, Cmd msg )
+trigger (Glue rec) fc ( model, cmd ) =
+    ( model, Cmd.batch [ Cmd.map rec.msg <| fc <| rec.get model, cmd ] )
+
+
 {-| Subscribe to the `subscriptions` defined in the child module.
 
     subscriptions : Model -> Sub Msg
@@ -336,16 +360,6 @@ viewSimple (Glue rec) v msg model =
 
 {-| A tiny abstraction over [`Cmd.map`](https://package.elm-lang.org/packages/elm/core/latest/Platform-Cmd#map)
 packed in `(model, Cmd msg)`.
-
-    -- Parent module
-    type Msg
-        = ChildMsg Child.Msg
-
-    update =
-        -- ...
-        childModelCmdPair
-            |> Glue.map ChildMsg
-
 -}
 map : (subMsg -> msg) -> ( subModel, Cmd subMsg ) -> ( subModel, Cmd msg )
 map constructor pair =
