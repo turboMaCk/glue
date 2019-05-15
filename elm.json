@@ -3,7 +3,7 @@
     "name": "turboMaCk/glue",
     "summary": "Composing TEA modules with isolated state",
     "license": "BSD-3-Clause",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "exposed-modules": [
         "Glue"
     ],
