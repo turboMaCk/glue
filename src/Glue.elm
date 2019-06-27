@@ -5,7 +5,7 @@ module Glue exposing
     , update, updateModel, updateWith, updateModelWith, trigger
     , subscriptions, subscriptionsWhen
     , view, viewSimple
-    , combine, map
+    , id, combine, map
     )
 
 {-| Composing Elm applications from smaller isolated parts (modules).
@@ -55,7 +55,7 @@ Designed for chaining initialization of child modules from parent `init` functio
 
 # Other
 
-@docs map, combine
+@docs id, combine, map
 
 -}
 
@@ -375,4 +375,24 @@ combine (Glue.Internal.Glue inner) (Glue.Internal.Glue inner2) =
         { msg = inner.msg << inner2.msg
         , get = inner2.get << inner.get
         , set = \s m -> inner.set (inner2.set s (inner.get m)) m
+        }
+
+
+{-| Identity Glue.
+
+This can be for instance used for chaining updates
+of model.
+
+    chainUpdates model =
+        ( model, Cmd.none )
+            |> Glue.updateWith Glue.id f
+            |> Glue.updateWith Glue.id g
+
+-}
+id : Glue model model msg msg
+id =
+    Glue.Internal.Glue
+        { get = identity
+        , set = always
+        , msg = identity
         }
