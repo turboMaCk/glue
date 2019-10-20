@@ -1,6 +1,6 @@
 module Glue.Lazy exposing
     ( LazyGlue
-    , initLater, forceInit, forceInitModel, ensure, ensureModel
+    , initLater, initNow, forceInit, forceInitModel, ensure, ensureModel
     , update, updateModel, updateWith, updateModelWith, trigger
     , subscriptions, subscriptionsWhen
     , view
@@ -30,7 +30,7 @@ the module at the right time.
 
 ## Initialization
 
-@docs initLater, forceInit, forceInitModel, ensure, ensureModel
+@docs initLater, initNow, forceInit, forceInitModel, ensure, ensureModel
 
 
 ## Updates
@@ -65,6 +65,14 @@ should be initalized later. This function is useful in cases using record with m
 initLater : LazyGlue model subModel msg subMsg -> ( Maybe subModel -> a, Cmd msg ) -> ( a, Cmd msg )
 initLater _ ( f, cmd ) =
     ( f Nothing, cmd )
+
+
+{-| Similar to [`initLater`](#initLater) but for cases when
+you need to initialize with `Just model` right away in init function.
+-}
+initNow : LazyGlue model subModel msg subMsg -> ( subModel, Cmd subMsg ) -> ( Maybe subModel -> a, Cmd msg ) -> ( a, Cmd msg )
+initNow (Glue.Internal.Glue { msg }) ( m, c ) ( f, cmd ) =
+    ( f <| Just m, Cmd.batch [ cmd, Cmd.map msg c ] )
 
 
 {-| Force intialization of module. If model state already exists in the form of `Just model`
